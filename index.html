@@ -3,259 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Seeds Aleatórias com Mapa 2D</title>
+    <title>Jogo 3D Estilo Minecraft</title>
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            flex-direction: column;
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }
-        #seedDisplay {
-            margin-top: 20px;
-            font-size: 24px;
-            color: #333;
-        }
-        button {
-            padding: 10px 20px;
-            margin-top: 20px;
-            font-size: 18px;
-            cursor: pointer;
-        }
-        .layer {
-            display: grid;
-            grid-template-columns: repeat(10, 30px);
-            gap: 2px;
-            margin-top: 20px;
-        }
-        .block {
-            width: 30px;
-            height: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .grass {
-            background-color: green;
-        }
-        .dirt {
-            background-color: brown;
-        }
-        .wood {
-            background-color: #8B4513; /* Cor da madeira */
-        }
-        .stone {
-            background-color: gray;
-        }
-        .coal {
-            background-color: black;
-            color: white;
-        }
-        .iron {
-            background-color: silver;
-            color: black;
-        }
-        .gold {
-            background-color: gold;
-            color: black;
-        }
-        .diamond {
-            background-color: cyan;
-            color: black;
+            overflow: hidden;
         }
         #inventory {
-            margin-top: 20px;
-            display: flex;
-            flex-wrap: wrap;
-            width: 320px; /* Tamanho do inventário */
-            border: 1px solid #ccc;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
             padding: 10px;
-            background-color: white;
-        }
-        .inventory-slot {
-            width: 30px;
-            height: 30px;
-            margin: 2px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid #000;
-        }
-        #craftingArea {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        #craftingSlot {
-            width: 100px;
-            height: 100px;
-            border: 1px solid #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            margin-bottom: 10px;
-            background-color: #f0f0f0;
-        }
-        #craftButton {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
         }
     </style>
 </head>
 <body>
-
-    <h1>Gerador de Seeds Aleatórias com Mapa 2D</h1>
-    <p>Clique no botão para gerar uma seed aleatória e um mapa:</p>
-    
-    <button id="generateButton">Gerar Seed e Mapa</button>
-    
-    <div id="seedDisplay">Sua seed aparecerá aqui</div>
-    <div id="layersContainer"></div>
-    <div id="inventory"></div>
-    
-    <div id="craftingArea">
-        <h2>Área de Craft</h2>
-        <div id="craftingSlot">🪵</div> <!-- Slot de Craft -->
-        <button id="craftButton">Craftar</button>
-    </div>
+    <div id="inventory">Inventário:</div>
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        document.getElementById("generateButton").addEventListener("click", generateRandomSeed);
-        document.getElementById("craftButton").addEventListener("click", craftItem);
+        let scene, camera, renderer, controls;
+        let inventory = {};
 
-        const inventoryItems = {};
+        function init() {
+            // Configuração da cena
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
 
-        function generateRandomSeed() {
-            const seed = Math.floor(Math.random() * 1000000);
-            document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
-            generateMap(seed);
+            // Controle da câmera
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+
+            // Luz
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(5, 10, 7.5);
+            scene.add(light);
+            scene.add(new THREE.AmbientLight(0x404040));
+
+            // Criar blocos
+            createBlocks();
+
+            camera.position.set(5, 5, 10);
+            animate();
         }
 
-        function generateMap(seed) {
-            const layersContainer = document.getElementById("layersContainer");
-            layersContainer.innerHTML = ''; // Limpa as camadas anteriores
-            const inventory = document.getElementById("inventory");
-            inventory.innerHTML = ''; // Limpa o inventário anterior
+        function createBlocks() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const materials = [
+                new THREE.MeshStandardMaterial({ color: 0x00ff00 }), // Grama
+                new THREE.MeshStandardMaterial({ color: 0x8B4513 }), // Madeira
+                new THREE.MeshStandardMaterial({ color: 0x8B4513 }), // Terra
+                new THREE.MeshStandardMaterial({ color: 0x808080 }), // Pedra
+                new THREE.MeshStandardMaterial({ color: 0x000000 }), // Carvão
+                new THREE.MeshStandardMaterial({ color: 0xFFD700 }), // Ouro
+                new THREE.MeshStandardMaterial({ color: 0xFFFFFF }), // Diamante
+            ];
 
-            const totalLayers = 10; // Número de camadas
-
-            for (let layer = 0; layer < totalLayers; layer++) {
-                const layerElement = document.createElement("div");
-                layerElement.className = "layer";
-
-                for (let x = 0; x < 10; x++) {
-                    const block = document.createElement("div");
-                    let blockType;
-
-                    // Geração de superfície e cavernas
-                    if (layer === 0) {
-                        blockType = "grass"; // Primeira camada é sempre grama
-                        block.textContent = "🟩"; // Bloco de grama
-                    } else if (layer === 1) {
-                        blockType = "wood"; // Segunda camada é madeira
-                        block.textContent = "🪵"; // Bloco de madeira
-                    } else if (layer === 2) {
-                        blockType = "dirt"; // Terceira camada é sempre terra
-                        block.textContent = "🟫"; // Bloco de terra
-                    } else {
-                        const randomValue = (seed + x * 31 + layer * 17) % 20; // Modificação para ter mais tipos
-                        if (randomValue < 4) {
-                            blockType = "stone";
-                            block.textContent = "⛰️"; // Bloco de pedra
-                        } else if (randomValue < 8) {
-                            blockType = "coal";
-                            block.textContent = "🪨"; // Bloco de carvão
-                        } else if (randomValue < 12) {
-                            blockType = "iron";
-                            block.textContent = "⛏️"; // Bloco de ferro
-                        } else if (randomValue < 16) {
-                            blockType = "gold";
-                            block.textContent = "💰"; // Bloco de ouro
-                        } else {
-                            blockType = "diamond";
-                            block.textContent = "💎"; // Bloco de diamante
-                        }
-                    }
-
-                    block.className = `block ${blockType}`;
-                    block.addEventListener("click", () => {
-                        if (canCollect(blockType)) {
-                            block.style.display = 'none'; // Faz todos os blocos sumirem ao clicar
-                            addToInventory(blockType); // Adiciona o bloco ao inventário
-                        } else {
-                            alert(`Você precisa de uma ferramenta para coletar ${blockType}!`);
-                        }
-                    });
-
-                    layerElement.appendChild(block);
+            for (let x = -5; x <= 5; x++) {
+                for (let z = -5; z <= 5; z++) {
+                    let blockType = Math.floor(Math.random() * materials.length);
+                    const block = new THREE.Mesh(geometry, materials[blockType]);
+                    block.position.set(x, 0, z);
+                    block.userData = { type: blockType };
+                    scene.add(block);
+                    
+                    block.callback = function() {
+                        collectBlock(block);
+                    };
+                    
+                    block.cursor = new THREE.Vector3();
+                    block.cursor.set(0, 1, 0);
                 }
-
-                layersContainer.appendChild(layerElement);
             }
 
-            createInventory();
+            // Evento de clique
+            window.addEventListener('click', (event) => {
+                event.preventDefault();
+                const mouse = new THREE.Vector2();
+                const raycaster = new THREE.Raycaster();
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+
+                const intersects = raycaster.intersectObjects(scene.children);
+
+                if (intersects.length > 0) {
+                    intersects[0].object.callback();
+                }
+            });
         }
 
-        function canCollect(blockType) {
-            // Lógica para verificar se o jogador tem a ferramenta necessária
-            if (blockType === 'wood') {
-                return inventoryItems['wooden_axe']; // Necessita de um machado
-            } else if (blockType === 'stone') {
-                return inventoryItems['stone_pickaxe']; // Necessita de uma picareta
-            } else {
-                return true; // Pode coletar outros itens
+        function collectBlock(block) {
+            const blockType = block.userData.type;
+            const blockNames = ["Grama", "Madeira", "Terra", "Pedra", "Carvão", "Ouro", "Diamante"];
+            const itemName = blockNames[blockType];
+            alert(`Você coletou: ${itemName}`);
+
+            // Adiciona ao inventário
+            if (!inventory[itemName]) {
+                inventory[itemName] = 0;
             }
-        }
-
-        function addToInventory(blockType) {
-            const inventory = document.getElementById("inventory");
-            inventoryItems[blockType] = (inventoryItems[blockType] || 0) + 1; // Adiciona ao inventário
-            const slot = document.createElement("div");
-            slot.className = `inventory-slot ${blockType}`;
-            slot.textContent = blockType.charAt(0).toUpperCase(); // Exibe a primeira letra do tipo de bloco
-            inventory.appendChild(slot);
-        }
-
-        function craftItem() {
-            // Lógica para craftar um item, exemplo: "craftar um machado de madeira"
-            if (inventoryItems['wood'] >= 3) { // Verifica se há madeira suficiente
-                inventoryItems['wood'] -= 3; // Remove madeira do inventário
-                inventoryItems['wooden_axe'] = (inventoryItems['wooden_axe'] || 0) + 1; // Adiciona machado ao inventário
-                alert('Você fez um machado de madeira!');
-            } else {
-                alert('Você precisa de mais madeira para craftar um machado!');
-            }
+            inventory[itemName]++;
             updateInventory();
+            scene.remove(block); // Remove o bloco do cenário
         }
 
         function updateInventory() {
-            const inventory = document.getElementById("inventory");
-            inventory.innerHTML = ''; // Limpa o inventário anterior
-
-            for (const item in inventoryItems) {
-                const slot = document.createElement("div");
-                slot.className = `inventory-slot ${item}`;
-                slot.textContent = `${item.charAt(0).toUpperCase()} (${inventoryItems[item]})`; // Exibe a quantidade de cada item
-                inventory.appendChild(slot);
+            const inventoryDisplay = document.getElementById('inventory');
+            inventoryDisplay.innerHTML = 'Inventário:';
+            for (const item in inventory) {
+                inventoryDisplay.innerHTML += `<br>${item}: ${inventory[item]}`;
             }
         }
 
-        function createInventory() {
-            // Adiciona itens iniciais ao inventário
-            inventoryItems['wood'] = 0; // Madeira
-            inventoryItems['wooden_axe'] = 0; // Machado de madeira
-            inventoryItems['stone_pickaxe'] = 0; // Picareta de pedra
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
         }
-    </script>
 
+        init();
+    </script>
 </body>
 </html>
