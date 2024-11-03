@@ -1,58 +1,82 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Seeds Aleatórias</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            margin: 0;
-        }
-        #container {
-            text-align: center;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        #seedDisplay {
-            font-size: 24px;
-            margin-top: 15px;
-            color: #333;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Mundo com Seed</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      background-color: #f4f4f9;
+      margin: 0;
+    }
+    #world {
+      margin-top: 20px;
+      font-size: 24px;
+      text-align: left;
+      line-height: 1.5;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-    <div id="container">
-        <h1>Gerador de Seeds Aleatórias</h1>
-        <button onclick="gerarSeed()">Gerar Seed</button>
-        <div id="seedDisplay">Clique no botão para gerar uma seed</div>
-    </div>
 
-    <script>
-        function gerarSeed() {
-            // Gerar uma seed aleatória com números entre 1000 e 9999
-            const seed = Math.floor(1000 + Math.random() * 9000);
-            document.getElementById('seedDisplay').innerText = `Seed Gerada: ${seed}`;
-        }
-    </script>
+  <h1>Gerador de Mundo com Seed</h1>
+  <p>Digite uma seed para gerar o mundo:</p>
+  <input type="text" id="seedInput" placeholder="Ex: 8Z2">
+  <button onclick="generateWorld()">Gerar Mundo</button>
+  
+  <div id="world"></div>
+
+  <script>
+    function generateWorld() {
+      const seed = document.getElementById("seedInput").value.trim();
+      const worldContainer = document.getElementById("world");
+      worldContainer.innerHTML = ''; // Limpar a área de visualização
+
+      // Configurações básicas das seeds
+      const surfaceBlock = "🟩";
+      const undergroundBlock = "🟫";
+
+      // Analisar a seed
+      let numSurfaceBlocks = parseInt(seed[0]);
+      let layerChar = seed[1];
+      let depth = parseInt(seed[2] || 0);
+      
+      let numUndergroundBlocks = (layerChar.charCodeAt(0) - 'A'.charCodeAt(0)) + 1;
+      let surfaceLevel = numSurfaceBlocks;
+
+      // Ajuste de profundidade baseado na seed
+      if (depth < 0) {
+        surfaceLevel += depth;
+      } else if (depth > 0) {
+        surfaceLevel += depth;
+      }
+
+      // Gerar blocos da superfície
+      let surface = "";
+      for (let i = 0; i < Math.max(surfaceLevel, 0); i++) {
+        surface += surfaceBlock + "<br>";
+      }
+
+      // Gerar blocos do subsolo
+      let underground = "";
+      for (let i = 0; i < numUndergroundBlocks; i++) {
+        underground += undergroundBlock + "<br>";
+      }
+
+      // Exibir o mundo
+      worldContainer.innerHTML = surface + underground;
+    }
+  </script>
 </body>
 </html>
