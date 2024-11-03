@@ -18,16 +18,27 @@
             border-radius: 5px;
             font-family: Arial, sans-serif;
         }
+        #crafting {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
     <div id="inventory">Inventário:</div>
+    <div id="crafting">Crafting:</div>
     <script src="https://threejs.org/build/three.min.js"></script>
     <script src="https://threejs.org/examples/js/controls/OrbitControls.js"></script>
 
     <script>
         let scene, camera, renderer, controls;
         let inventory = {};
+        let blocks = [];
 
         function init() {
             // Configuração da cena
@@ -73,13 +84,7 @@
                     block.position.set(x, 0, z);
                     block.userData = { type: blockType };
                     scene.add(block);
-                    
-                    block.callback = function() {
-                        collectBlock(block);
-                    };
-                    
-                    block.cursor = new THREE.Vector3();
-                    block.cursor.set(0, 1, 0);
+                    blocks.push(block);
                 }
             }
 
@@ -94,10 +99,10 @@
 
                 raycaster.setFromCamera(mouse, camera);
 
-                const intersects = raycaster.intersectObjects(scene.children);
+                const intersects = raycaster.intersectObjects(blocks);
 
                 if (intersects.length > 0) {
-                    intersects[0].object.callback();
+                    collectBlock(intersects[0].object);
                 }
             });
         }
