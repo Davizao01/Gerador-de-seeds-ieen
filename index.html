@@ -3,93 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Randomizer de Mapa</title>
+    <title>Gerador de Seeds Aleatórias</title>
     <style>
         body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
             font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f0f0f0;
+            height: 100vh;
+            background-color: #f4f4f9;
+            margin: 0;
         }
-        input {
-            padding: 10px;
-            width: 300px;
-            margin-bottom: 10px;
-        }
-        button {
-            padding: 10px 15px;
-        }
-        .output {
+        #seedDisplay, #mapDisplay {
             margin-top: 20px;
+            font-size: 24px;
+            color: #333;
             white-space: pre;
             font-family: monospace;
+        }
+        button {
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 18px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>Randomizer de Mapa</h1>
-    <label for="seedInput">Insira uma seed:</label>
-    <input type="text" id="seedInput" placeholder="Ex: 2, 3B, 1A1">
-    <button onclick="gerarMapa()">Gerar Mapa</button>
+
+    <h1>Gerador de Seeds Aleatórias</h1>
+    <p>Clique no botão para gerar uma seed aleatória:</p>
     
-    <div class="output" id="output"></div>
+    <button onclick="generateRandomSeed()">Gerar Seed</button>
+    
+    <div id="seedDisplay">Sua seed aparecerá aqui</div>
+    <div id="mapDisplay"></div>
 
     <script>
-        // Função para gerar o mapa baseado na seed
-        function gerarMapa() {
-            const seed = document.getElementById('seedInput').value;
-            if (!seed) return; // Não faz nada se a seed estiver vazia
+        function generateRandomSeed() {
+            // Primeiro caractere: número de 1 a 9 para blocos de superfície
+            const surfaceBlocks = Math.floor(Math.random() * 9) + 1;
 
-            // Configurações de geração
+            // Segundo caractere: letra de A a Z para camadas de subsolo
+            const layers = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // 65 é 'A' em ASCII
+
+            // Terceiro caractere: número entre -5 e +5 para ajuste de altura
+            const heightAdjustment = Math.floor(Math.random() * 11) - 5;
+
+            // Construir a seed com os três caracteres
+            const seed = `${surfaceBlocks}${layers}${heightAdjustment}`;
+
+            // Exibir a seed na tela
+            document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
+            // Gerar e exibir o mapa com base na seed
+            displayMap(seed);
+        }
+
+        function displayMap(seed) {
+            const surfaceBlocks = parseInt(seed[0]);
+            const layers = seed[1].charCodeAt(0) - 'A'.charCodeAt(0) + 1; // Converte de 'A' para 1
+            const heightAdjustment = parseInt(seed[2]);
+
             let output = '';
-            const random = seedRandom(seed); // Inicializa a função de randomização baseada na seed
-            const largura = parseInt(seed[0]) || 5; // Largura padrão de 5 se a seed não fornecer
-            const profundidade = (seed[1] ? seed[1].charCodeAt(0) - 'A'.charCodeAt(0) + 1 : 3); // Profundidade padrão de 3
 
-            // Gera a estrutura
-            for (let j = 0; j < profundidade; j++) {
-                for (let i = 0; i < largura; i++) {
-                    output += random() < 0.5 ? '🟩' : '🟫'; // Gera blocos aleatórios
+            // Gera a estrutura do mapa
+            for (let j = 0; j < layers; j++) {
+                for (let i = 0; i < surfaceBlocks; i++) {
+                    // Adiciona blocos de grama ou terra aleatoriamente
+                    output += Math.random() < 0.5 ? '🟩' : '🟫';
                 }
                 output += '\n';
             }
 
-            // Exibe a estrutura
-            document.getElementById('output').textContent = output;
-
-            // Armazenar a seed e a estrutura no localStorage
-            localStorage.setItem('seed', seed);
-            localStorage.setItem('mapa', output);
-        }
-
-        // Função para gerar uma função de randomização baseada em uma seed
-        function seedRandom(seed) {
-            let m = 0x80000000, // 2^31
-                a = 1103515245,
-                c = 12345;
-
-            let hash = 0;
-            for (let i = 0; i < seed.length; i++) {
-                hash = (hash * 31 + seed.charCodeAt(i)) % m;
+            // Ajusta a altura do mapa (representando visualmente o ajuste)
+            if (heightAdjustment > 0) {
+                output = '\n'.repeat(heightAdjustment) + output;
+            } else if (heightAdjustment < 0) {
+                output = output.slice(Math.abs(heightAdjustment) * (surfaceBlocks + 1));
             }
 
-            return function () {
-                hash = (a * hash + c) % m;
-                return hash / m;
-            };
+            // Exibir a estrutura do mapa
+            document.getElementById("mapDisplay").textContent = output;
         }
-
-        // Função para carregar a estrutura do localStorage
-        function carregarMapa() {
-            const seed = localStorage.getItem('seed');
-            const mapa = localStorage.getItem('mapa');
-            if (seed && mapa) {
-                document.getElementById('seedInput').value = seed;
-                document.getElementById('output').textContent = mapa;
-            }
-        }
-
-        // Carregar o mapa ao abrir a página
-        window.onload = carregarMapa;
     </script>
 </body>
 </html>
