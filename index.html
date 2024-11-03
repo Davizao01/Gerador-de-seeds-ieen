@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Seeds</title>
+    <title>Randomizer de Mapa</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,77 +26,70 @@
     </style>
 </head>
 <body>
-    <h1>Gerador de Seeds</h1>
+    <h1>Randomizer de Mapa</h1>
     <label for="seedInput">Insira uma seed:</label>
     <input type="text" id="seedInput" placeholder="Ex: 2, 3B, 1A1">
-    <button onclick="gerarEstrutura()">Gerar Estrutura</button>
+    <button onclick="gerarMapa()">Gerar Mapa</button>
     
     <div class="output" id="output"></div>
 
     <script>
-        // Função para gerar a estrutura com base na seed
-        function gerarEstrutura() {
+        // Função para gerar o mapa baseado na seed
+        function gerarMapa() {
             const seed = document.getElementById('seedInput').value;
             if (!seed) return; // Não faz nada se a seed estiver vazia
+
+            // Configurações de geração
             let output = '';
+            const random = seedRandom(seed); // Inicializa a função de randomização baseada na seed
+            const largura = parseInt(seed[0]) || 5; // Largura padrão de 5 se a seed não fornecer
+            const profundidade = (seed[1] ? seed[1].charCodeAt(0) - 'A'.charCodeAt(0) + 1 : 3); // Profundidade padrão de 3
 
-            // Lógica básica de geração
-            const primeiroCaractere = parseInt(seed[0]);
-            const segundoCaractere = seed[1];
-            const terceiroCaractere = seed[2] ? seed[2] : '';
-
-            // Gerar blocos de grama
-            for (let i = 0; i < primeiroCaractere; i++) {
-                output += '🟩';
-            }
-            output += '\n';
-
-            // Definir profundidade
-            let profundidade = 0;
-            if (segundoCaractere) {
-                profundidade = segundoCaractere.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
-                for (let j = 0; j < profundidade; j++) {
-                    for (let i = 0; i < primeiroCaractere; i++) {
-                        output += '🟫';
-                    }
-                    output += '\n';
+            // Gera a estrutura
+            for (let j = 0; j < profundidade; j++) {
+                for (let i = 0; i < largura; i++) {
+                    output += random() < 0.5 ? '🟩' : '🟫'; // Gera blocos aleatórios
                 }
+                output += '\n';
             }
 
-            // Processar altura (terceiro caractere)
-            if (terceiroCaractere) {
-                const altura = parseInt(terceiroCaractere);
-                if (altura > 0) {
-                    for (let j = 0; j < altura; j++) {
-                        output += '🟩';
-                    }
-                } else {
-                    for (let j = 0; j < Math.abs(altura); j++) {
-                        output += '🟫';
-                    }
-                }
-            }
-
-            // Exibir a estrutura
+            // Exibe a estrutura
             document.getElementById('output').textContent = output;
 
             // Armazenar a seed e a estrutura no localStorage
             localStorage.setItem('seed', seed);
-            localStorage.setItem('estrutura', output);
+            localStorage.setItem('mapa', output);
+        }
+
+        // Função para gerar uma função de randomização baseada em uma seed
+        function seedRandom(seed) {
+            let m = 0x80000000, // 2^31
+                a = 1103515245,
+                c = 12345;
+
+            let hash = 0;
+            for (let i = 0; i < seed.length; i++) {
+                hash = (hash * 31 + seed.charCodeAt(i)) % m;
+            }
+
+            return function () {
+                hash = (a * hash + c) % m;
+                return hash / m;
+            };
         }
 
         // Função para carregar a estrutura do localStorage
-        function carregarEstrutura() {
+        function carregarMapa() {
             const seed = localStorage.getItem('seed');
-            const estrutura = localStorage.getItem('estrutura');
-            if (seed && estrutura) {
+            const mapa = localStorage.getItem('mapa');
+            if (seed && mapa) {
                 document.getElementById('seedInput').value = seed;
-                document.getElementById('output').textContent = estrutura;
+                document.getElementById('output').textContent = mapa;
             }
         }
 
-        // Carregar a estrutura ao abrir a página
-        window.onload = carregarEstrutura;
+        // Carregar o mapa ao abrir a página
+        window.onload = carregarMapa;
     </script>
 </body>
 </html>
