@@ -7,11 +7,12 @@
     <style>
         body {
             display: flex;
-            flex-direction: column;
-            align-items: center;
+            flex-direction: row;
+            align-items: flex-start;
             font-family: Arial, sans-serif;
             margin: 0;
             background-color: #f4f4f4;
+            height: 100vh;
         }
         #canvas {
             border: 1px solid #000;
@@ -21,9 +22,16 @@
         #grid {
             display: none; /* Esconde inicialmente */
             margin: 10px 0;
+            display: grid;
         }
         #controls {
-            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
         .color {
             width: 30px;
@@ -45,12 +53,17 @@
     </style>
 </head>
 <body>
-    <h1>Paint e Pixel Art</h1>
     <div id="controls">
         <button id="toggleButton" onclick="toggleMode()">Modo Pixel Art</button>
         <div id="colorPalette"></div>
         <label for="brushSize">Tamanho do Pincel:</label>
         <input type="range" id="brushSize" min="1" max="100" value="5">
+        <label for="gridSize">Tamanho da Grade:</label>
+        <select id="gridSize" onchange="changeGridSize()">
+            <option value="16">16x16</option>
+            <option value="32">32x32</option>
+            <option value="64">64x64</option>
+        </select>
     </div>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="grid"></div>
@@ -66,6 +79,7 @@
         let brushColor = 'black';
         let brushSize = 5;
         let isPixelArtMode = false;
+        let gridSize = 16;
         const colors = generateRandomColors(8);
 
         // Gera cores aleatórias
@@ -97,14 +111,15 @@
                 toggleButton.textContent = 'Modo Paint';
                 canvas.style.display = 'none';
                 grid.style.display = 'grid';
-                grid.style.gridTemplateColumns = 'repeat(64, 10px)';
-                grid.style.gridTemplateRows = 'repeat(64, 10px)';
+                grid.style.gridTemplateColumns = `repeat(${gridSize}, 20px)`;
+                grid.style.gridTemplateRows = `repeat(${gridSize}, 20px)`;
                 grid.style.gap = '1px';
+                grid.innerHTML = ''; // Limpa a grade anterior
 
-                for (let i = 0; i < 64 * 64; i++) {
+                for (let i = 0; i < gridSize * gridSize; i++) {
                     const pixel = document.createElement('div');
-                    pixel.style.width = '10px';
-                    pixel.style.height = '10px';
+                    pixel.style.width = '20px';
+                    pixel.style.height = '20px';
                     pixel.style.border = '1px solid #ddd';
                     pixel.style.boxSizing = 'border-box';
                     pixel.onclick = () => {
@@ -156,6 +171,15 @@
         brushSizeInput.addEventListener('input', (e) => {
             brushSize = e.target.value;
         });
+
+        // Muda o tamanho da grade
+        function changeGridSize() {
+            gridSize = document.getElementById('gridSize').value;
+            if (isPixelArtMode) {
+                toggleMode(); // Reinicia o modo para atualizar a grade
+                toggleMode(); // Ativa o modo novamente
+            }
+        }
 
         // Inicializa a paleta de cores
         updateColorPalette();
