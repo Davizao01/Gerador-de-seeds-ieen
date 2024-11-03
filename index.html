@@ -46,6 +46,9 @@
         .dirt {
             background-color: brown;
         }
+        .wood {
+            background-color: #8B4513; /* Cor da madeira */
+        }
         .stone {
             background-color: gray;
         }
@@ -83,6 +86,29 @@
             align-items: center;
             border: 1px solid #000;
         }
+        #craftingArea {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #craftingSlot {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-bottom: 10px;
+            background-color: #f0f0f0;
+        }
+        #craftButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -95,9 +121,18 @@
     <div id="seedDisplay">Sua seed aparecerá aqui</div>
     <div id="layersContainer"></div>
     <div id="inventory"></div>
+    
+    <div id="craftingArea">
+        <h2>Área de Craft</h2>
+        <div id="craftingSlot">🪵</div> <!-- Slot de Craft -->
+        <button id="craftButton">Craftar</button>
+    </div>
 
     <script>
         document.getElementById("generateButton").addEventListener("click", generateRandomSeed);
+        document.getElementById("craftButton").addEventListener("click", craftItem);
+
+        const inventoryItems = {};
 
         function generateRandomSeed() {
             const seed = Math.floor(Math.random() * 1000000);
@@ -112,7 +147,6 @@
             inventory.innerHTML = ''; // Limpa o inventário anterior
 
             const totalLayers = 10; // Número de camadas
-            const blockTypes = ['grass', 'dirt', 'stone', 'coal', 'iron', 'gold', 'diamond'];
 
             for (let layer = 0; layer < totalLayers; layer++) {
                 const layerElement = document.createElement("div");
@@ -127,7 +161,10 @@
                         blockType = "grass"; // Primeira camada é sempre grama
                         block.textContent = "🟩"; // Bloco de grama
                     } else if (layer === 1) {
-                        blockType = "dirt"; // Segunda camada é sempre terra
+                        blockType = "wood"; // Segunda camada é madeira
+                        block.textContent = "🪵"; // Bloco de madeira
+                    } else if (layer === 2) {
+                        blockType = "dirt"; // Terceira camada é sempre terra
                         block.textContent = "🟫"; // Bloco de terra
                     } else {
                         const randomValue = (seed + x * 31 + layer * 17) % 20; // Modificação para ter mais tipos
@@ -151,8 +188,12 @@
 
                     block.className = `block ${blockType}`;
                     block.addEventListener("click", () => {
-                        block.style.display = 'none'; // Faz todos os blocos sumirem ao clicar
-                        addToInventory(blockType); // Adiciona o bloco ao inventário
+                        if (canCollect(blockType)) {
+                            block.style.display = 'none'; // Faz todos os blocos sumirem ao clicar
+                            addToInventory(blockType); // Adiciona o bloco ao inventário
+                        } else {
+                            alert(`Você precisa de uma ferramenta para coletar ${blockType}!`);
+                        }
                     });
 
                     layerElement.appendChild(block);
@@ -164,22 +205,57 @@
             createInventory();
         }
 
+        function canCollect(blockType) {
+            // Lógica para verificar se o jogador tem a ferramenta necessária
+            if (blockType === 'wood') {
+                return inventoryItems['wooden_axe']; // Necessita de um machado
+            } else if (blockType === 'stone') {
+                return inventoryItems['stone_pickaxe']; // Necessita de uma picareta
+            } else {
+                return true; // Pode coletar outros itens
+            }
+        }
+
         function addToInventory(blockType) {
             const inventory = document.getElementById("inventory");
+            inventoryItems[blockType] = (inventoryItems[blockType] || 0) + 1; // Adiciona ao inventário
             const slot = document.createElement("div");
             slot.className = `inventory-slot ${blockType}`;
             slot.textContent = blockType.charAt(0).toUpperCase(); // Exibe a primeira letra do tipo de bloco
             inventory.appendChild(slot);
         }
 
-        function createInventory() {
+        function craftItem() {
+            // Lógica para craftar um item, exemplo: "craftar um machado de madeira"
+            if (inventoryItems['wood'] >= 3) { // Verifica se há madeira suficiente
+                inventoryItems['wood'] -= 3; // Remove madeira do inventário
+                inventoryItems['wooden_axe'] = (inventoryItems['wooden_axe'] || 0) + 1; // Adiciona machado ao inventário
+                alert('Você fez um machado de madeira!');
+            } else {
+                alert('Você precisa de mais madeira para craftar um machado!');
+            }
+            updateInventory();
+        }
+
+        function updateInventory() {
             const inventory = document.getElementById("inventory");
-            for (let i = 0; i < 16; i++) { // 16 slots no inventário
+            inventory.innerHTML = ''; // Limpa o inventário anterior
+
+            for (const item in inventoryItems) {
                 const slot = document.createElement("div");
-                slot.className = "inventory-slot";
+                slot.className = `inventory-slot ${item}`;
+                slot.textContent = `${item.charAt(0).toUpperCase()} (${inventoryItems[item]})`; // Exibe a quantidade de cada item
                 inventory.appendChild(slot);
             }
         }
+
+        function createInventory() {
+            // Adiciona itens iniciais ao inventário
+            inventoryItems['wood'] = 0; // Madeira
+            inventoryItems['wooden_axe'] = 0; // Machado de madeira
+            inventoryItems['stone_pickaxe'] = 0; // Picareta de pedra
+        }
     </script>
+
 </body>
 </html>
