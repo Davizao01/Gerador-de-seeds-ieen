@@ -39,7 +39,7 @@
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            color: white;
+            cursor: pointer;
         }
         .grass {
             background-color: green;
@@ -120,6 +120,10 @@
                     }
 
                     block.className = `block ${blockType}`;
+                    block.addEventListener("click", () => {
+                        block.style.display = 'none'; // Faz o bloco sumir ao clicar
+                    });
+
                     mapElement.appendChild(block);
                 }
             }
