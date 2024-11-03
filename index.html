@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerador de Mundo com Seed</title>
+  <title>Gerador de Seeds Aleatórias</title>
   <style>
     body {
       display: flex;
@@ -15,67 +15,44 @@
       background-color: #f4f4f9;
       margin: 0;
     }
-    #world {
+    #seedDisplay {
       margin-top: 20px;
       font-size: 24px;
-      text-align: left;
-      line-height: 1.5;
+      color: #333;
     }
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      font-size: 16px;
+    button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 18px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
 
-  <h1>Gerador de Mundo com Seed</h1>
-  <p>Digite uma seed para gerar o mundo:</p>
-  <input type="text" id="seedInput" placeholder="Ex: 8Z2">
-  <button onclick="generateWorld()">Gerar Mundo</button>
+  <h1>Gerador de Seeds Aleatórias</h1>
+  <p>Clique no botão para gerar uma seed aleatória:</p>
   
-  <div id="world"></div>
+  <button onclick="generateRandomSeed()">Gerar Seed</button>
+  
+  <div id="seedDisplay">Sua seed aparecerá aqui</div>
 
   <script>
-    function generateWorld() {
-      const seed = document.getElementById("seedInput").value.trim();
-      const worldContainer = document.getElementById("world");
-      worldContainer.innerHTML = ''; // Limpar a área de visualização
+    function generateRandomSeed() {
+      // Primeiro caractere: número de 1 a 9 para blocos de superfície
+      const surfaceBlocks = Math.floor(Math.random() * 9) + 1;
 
-      // Configurações básicas das seeds
-      const surfaceBlock = "🟩";
-      const undergroundBlock = "🟫";
+      // Segundo caractere: letra de A a Z para camadas de subsolo
+      const layers = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // 65 é 'A' em ASCII
 
-      // Analisar a seed
-      let numSurfaceBlocks = parseInt(seed[0]);
-      let layerChar = seed[1];
-      let depth = parseInt(seed[2] || 0);
-      
-      let numUndergroundBlocks = (layerChar.charCodeAt(0) - 'A'.charCodeAt(0)) + 1;
-      let surfaceLevel = numSurfaceBlocks;
+      // Terceiro caractere: número entre -5 e +5 para ajuste de altura
+      const heightAdjustment = Math.floor(Math.random() * 11) - 5;
 
-      // Ajuste de profundidade baseado na seed
-      if (depth < 0) {
-        surfaceLevel += depth;
-      } else if (depth > 0) {
-        surfaceLevel += depth;
-      }
+      // Construir a seed com os três caracteres
+      const seed = `${surfaceBlocks}${layers}${heightAdjustment}`;
 
-      // Gerar blocos da superfície
-      let surface = "";
-      for (let i = 0; i < Math.max(surfaceLevel, 0); i++) {
-        surface += surfaceBlock + "<br>";
-      }
-
-      // Gerar blocos do subsolo
-      let underground = "";
-      for (let i = 0; i < numUndergroundBlocks; i++) {
-        underground += undergroundBlock + "<br>";
-      }
-
-      // Exibir o mundo
-      worldContainer.innerHTML = surface + underground;
+      // Exibir a seed na tela
+      document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
     }
   </script>
 </body>
