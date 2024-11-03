@@ -1,59 +1,102 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerador de Seeds Aleatórias</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      font-family: Arial, sans-serif;
-      height: 100vh;
-      background-color: #f4f4f9;
-      margin: 0;
-    }
-    #seedDisplay {
-      margin-top: 20px;
-      font-size: 24px;
-      color: #333;
-    }
-    button {
-      padding: 10px 20px;
-      margin-top: 20px;
-      font-size: 18px;
-      cursor: pointer;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Seeds</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 15px;
+        }
+        .output {
+            margin-top: 20px;
+            white-space: pre;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
+    <h1>Gerador de Seeds</h1>
+    <label for="seedInput">Insira uma seed:</label>
+    <input type="text" id="seedInput" placeholder="Ex: 2, 3B, 1A1">
+    <button onclick="gerarEstrutura()">Gerar Estrutura</button>
+    
+    <div class="output" id="output"></div>
 
-  <h1>Gerador de Seeds Aleatórias</h1>
-  <p>Clique no botão para gerar uma seed aleatória:</p>
-  
-  <button onclick="generateRandomSeed()">Gerar Seed</button>
-  
-  <div id="seedDisplay">Sua seed aparecerá aqui</div>
+    <script>
+        // Função para gerar a estrutura com base na seed
+        function gerarEstrutura() {
+            const seed = document.getElementById('seedInput').value;
+            if (!seed) return; // Não faz nada se a seed estiver vazia
+            let output = '';
 
-  <script>
-    function generateRandomSeed() {
-      // Primeiro caractere: número de 1 a 9 para blocos de superfície
-      const surfaceBlocks = Math.floor(Math.random() * 9) + 1;
+            // Lógica básica de geração
+            const primeiroCaractere = parseInt(seed[0]);
+            const segundoCaractere = seed[1];
+            const terceiroCaractere = seed[2] ? seed[2] : '';
 
-      // Segundo caractere: letra de A a Z para camadas de subsolo
-      const layers = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // 65 é 'A' em ASCII
+            // Gerar blocos de grama
+            for (let i = 0; i < primeiroCaractere; i++) {
+                output += '🟩';
+            }
+            output += '\n';
 
-      // Terceiro caractere: número entre -5 e +5 para ajuste de altura
-      const heightAdjustment = Math.floor(Math.random() * 11) - 5;
+            // Definir profundidade
+            let profundidade = 0;
+            if (segundoCaractere) {
+                profundidade = segundoCaractere.charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+                for (let j = 0; j < profundidade; j++) {
+                    for (let i = 0; i < primeiroCaractere; i++) {
+                        output += '🟫';
+                    }
+                    output += '\n';
+                }
+            }
 
-      // Construir a seed com os três caracteres
-      const seed = `${surfaceBlocks}${layers}${heightAdjustment}`;
+            // Processar altura (terceiro caractere)
+            if (terceiroCaractere) {
+                const altura = parseInt(terceiroCaractere);
+                if (altura > 0) {
+                    for (let j = 0; j < altura; j++) {
+                        output += '🟩';
+                    }
+                } else {
+                    for (let j = 0; j < Math.abs(altura); j++) {
+                        output += '🟫';
+                    }
+                }
+            }
 
-      // Exibir a seed na tela
-      document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
-    }
-  </script>
+            // Exibir a estrutura
+            document.getElementById('output').textContent = output;
+
+            // Armazenar a seed e a estrutura no localStorage
+            localStorage.setItem('seed', seed);
+            localStorage.setItem('estrutura', output);
+        }
+
+        // Função para carregar a estrutura do localStorage
+        function carregarEstrutura() {
+            const seed = localStorage.getItem('seed');
+            const estrutura = localStorage.getItem('estrutura');
+            if (seed && estrutura) {
+                document.getElementById('seedInput').value = seed;
+                document.getElementById('output').textContent = estrutura;
+            }
+        }
+
+        // Carregar a estrutura ao abrir a página
+        window.onload = carregarEstrutura;
+    </script>
 </body>
 </html>
