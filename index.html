@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paint Simples</title>
+    <title>Paint e Pixel Art</title>
     <style>
         body {
             display: flex;
@@ -16,6 +16,11 @@
         #canvas {
             border: 1px solid #000;
             cursor: crosshair;
+            display: none; /* Esconde inicialmente */
+        }
+        #grid {
+            display: none; /* Esconde inicialmente */
+            margin: 10px 0;
         }
         #controls {
             margin: 20px 0;
@@ -32,42 +37,96 @@
             width: 50px;
             margin-left: 10px;
         }
-        #save {
+        #toggleButton {
             margin-top: 20px;
+            padding: 10px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <h1>Paint Simples</h1>
+    <h1>Paint e Pixel Art</h1>
     <div id="controls">
-        <div id="colorPalette">
-            <div class="color" style="background-color: red;" onclick="changeColor('red')"></div>
-            <div class="color" style="background-color: green;" onclick="changeColor('green')"></div>
-            <div class="color" style="background-color: blue;" onclick="changeColor('blue')"></div>
-            <div class="color" style="background-color: yellow;" onclick="changeColor('yellow')"></div>
-            <div class="color" style="background-color: black;" onclick="changeColor('black')"></div>
-            <div class="color" style="background-color: white; border: 1px solid #000;" onclick="changeColor('white')"></div>
-            <div class="color" style="background-color: orange;" onclick="changeColor('orange')"></div>
-            <div class="color" style="background-color: purple;" onclick="changeColor('purple')"></div>
-        </div>
+        <button id="toggleButton" onclick="toggleMode()">Modo Pixel Art</button>
+        <div id="colorPalette"></div>
         <label for="brushSize">Tamanho do Pincel:</label>
         <input type="range" id="brushSize" min="1" max="100" value="5">
-        <button id="save" onclick="saveCanvas()">Salvar Imagem</button>
     </div>
     <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="grid"></div>
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const grid = document.getElementById('grid');
+        const colorPalette = document.getElementById('colorPalette');
+        const brushSizeInput = document.getElementById('brushSize');
 
         let painting = false;
         let brushColor = 'black';
         let brushSize = 5;
+        let isPixelArtMode = false;
+        const colors = generateRandomColors(8);
 
+        // Gera cores aleatórias
+        function generateRandomColors(num) {
+            const colorArray = [];
+            for (let i = 0; i < num; i++) {
+                const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
+                colorArray.push(color);
+            }
+            return colorArray;
+        }
+
+        // Atualiza a paleta de cores
+        function updateColorPalette() {
+            colorPalette.innerHTML = '';
+            colors.forEach(color => {
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'color';
+                colorDiv.style.backgroundColor = color;
+                colorDiv.onclick = () => changeColor(color);
+                colorPalette.appendChild(colorDiv);
+            });
+        }
+
+        // Alterna entre os modos
+        function toggleMode() {
+            isPixelArtMode = !isPixelArtMode;
+            if (isPixelArtMode) {
+                toggleButton.textContent = 'Modo Paint';
+                canvas.style.display = 'none';
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = 'repeat(64, 10px)';
+                grid.style.gridTemplateRows = 'repeat(64, 10px)';
+                grid.style.gap = '1px';
+
+                for (let i = 0; i < 64 * 64; i++) {
+                    const pixel = document.createElement('div');
+                    pixel.style.width = '10px';
+                    pixel.style.height = '10px';
+                    pixel.style.border = '1px solid #ddd';
+                    pixel.style.boxSizing = 'border-box';
+                    pixel.onclick = () => {
+                        pixel.style.backgroundColor = brushColor;
+                    };
+                    grid.appendChild(pixel);
+                }
+            } else {
+                toggleButton.textContent = 'Modo Pixel Art';
+                canvas.style.display = 'block';
+                grid.style.display = 'none';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                updateColorPalette();
+            }
+        }
+
+        // Altera a cor do pincel
         function changeColor(color) {
             brushColor = color;
         }
 
+        // Modo Paint
         function startPosition(e) {
             painting = true;
             draw(e);
@@ -75,7 +134,7 @@
 
         function endPosition() {
             painting = false;
-            ctx.beginPath(); // Para evitar que as linhas se conectem
+            ctx.beginPath();
         }
 
         function draw(e) {
@@ -94,16 +153,12 @@
         canvas.addEventListener('mousedown', startPosition);
         canvas.addEventListener('mouseup', endPosition);
         canvas.addEventListener('mousemove', draw);
-        document.getElementById('brushSize').addEventListener('input', (e) => {
+        brushSizeInput.addEventListener('input', (e) => {
             brushSize = e.target.value;
         });
 
-        function saveCanvas() {
-            const link = document.createElement('a');
-            link.download = 'paint_image.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        }
+        // Inicializa a paleta de cores
+        updateColorPalette();
     </script>
 </body>
 </html>
