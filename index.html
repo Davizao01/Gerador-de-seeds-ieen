@@ -15,12 +15,10 @@
             background-color: #f4f4f9;
             margin: 0;
         }
-        #seedDisplay, #mapDisplay {
+        #seedDisplay {
             margin-top: 20px;
             font-size: 24px;
             color: #333;
-            white-space: pre;
-            font-family: monospace;
         }
         button {
             padding: 10px 20px;
@@ -38,7 +36,6 @@
     <button onclick="generateRandomSeed()">Gerar Seed</button>
     
     <div id="seedDisplay">Sua seed aparecerá aqui</div>
-    <div id="mapDisplay"></div>
 
     <script>
         function generateRandomSeed() {
@@ -51,40 +48,17 @@
             // Terceiro caractere: número entre -5 e +5 para ajuste de altura
             const heightAdjustment = Math.floor(Math.random() * 11) - 5;
 
-            // Construir a seed com os três caracteres
-            const seed = `${surfaceBlocks}${layers}${heightAdjustment}`;
+            // Quarto caractere: aleatório entre - e + (para os ajustes de altura)
+            const adjustmentSymbol = heightAdjustment >= 0 ? '+' : '-';
+
+            // Quinto caractere: '=' (pode ser um placeholder ou para representar algo específico)
+            const equalsSign = '=';
+
+            // Construir a seed com os caracteres gerados
+            const seed = `${surfaceBlocks}${layers}${heightAdjustment}${adjustmentSymbol}${equalsSign}`;
 
             // Exibir a seed na tela
             document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
-            // Gerar e exibir o mapa com base na seed
-            displayMap(seed);
-        }
-
-        function displayMap(seed) {
-            const surfaceBlocks = parseInt(seed[0]);
-            const layers = seed[1].charCodeAt(0) - 'A'.charCodeAt(0) + 1; // Converte de 'A' para 1
-            const heightAdjustment = parseInt(seed[2]);
-
-            let output = '';
-
-            // Gera a estrutura do mapa
-            for (let j = 0; j < layers; j++) {
-                for (let i = 0; i < surfaceBlocks; i++) {
-                    // Adiciona blocos de grama ou terra aleatoriamente
-                    output += Math.random() < 0.5 ? '🟩' : '🟫';
-                }
-                output += '\n';
-            }
-
-            // Ajusta a altura do mapa (representando visualmente o ajuste)
-            if (heightAdjustment > 0) {
-                output = '\n'.repeat(heightAdjustment) + output;
-            } else if (heightAdjustment < 0) {
-                output = output.slice(Math.abs(heightAdjustment) * (surfaceBlocks + 1));
-            }
-
-            // Exibir a estrutura do mapa
-            document.getElementById("mapDisplay").textContent = output;
         }
     </script>
 </body>
