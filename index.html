@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Seeds Aleatórias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        #container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #seedDisplay {
+            font-size: 24px;
+            margin-top: 15px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Gerador de Seeds Aleatórias</h1>
+        <button onclick="gerarSeed()">Gerar Seed</button>
+        <div id="seedDisplay">Clique no botão para gerar uma seed</div>
+    </div>
+
+    <script>
+        function gerarSeed() {
+            // Gerar uma seed aleatória com números entre 1000 e 9999
+            const seed = Math.floor(1000 + Math.random() * 9000);
+            document.getElementById('seedDisplay').innerText = `Seed Gerada: ${seed}`;
+        }
+    </script>
+</body>
+</html>
