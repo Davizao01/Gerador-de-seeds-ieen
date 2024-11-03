@@ -50,6 +50,22 @@
         .stone {
             background-color: gray;
         }
+        .coal {
+            background-color: black;
+            color: white;
+        }
+        .iron {
+            background-color: silver;
+            color: black;
+        }
+        .gold {
+            background-color: gold;
+            color: black;
+        }
+        .diamond {
+            background-color: cyan;
+            color: black;
+        }
     </style>
 </head>
 <body>
@@ -66,57 +82,45 @@
         document.getElementById("generateButton").addEventListener("click", generateRandomSeed);
 
         function generateRandomSeed() {
-            // Primeiro caractere: número de 1 a 9 para blocos de superfície
-            const surfaceBlocks = Math.floor(Math.random() * 9) + 1;
-
-            // Segundo caractere: letra de A a Z para camadas de subsolo
-            const layers = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // 65 é 'A' em ASCII
-
-            // Terceiro caractere: número entre -5 e +5 para ajuste de altura
-            const heightAdjustment = Math.floor(Math.random() * 11) - 5;
-
-            // Quarto caractere: aleatório entre - e + (para os ajustes de altura)
-            const adjustmentSymbol = heightAdjustment >= 0 ? '+' : '-';
-
-            // Número aleatório entre 0 e 5 para adicionar após o sinal
-            const adjustmentValue = Math.abs(heightAdjustment); // Valor absoluto do ajuste de altura
-
-            // Quinto caractere: '=' (pode ser um placeholder ou para representar algo específico)
-            const equalsSign = '=';
-
-            // Construir a seed com os caracteres gerados
-            const seed = `${surfaceBlocks}${layers}${heightAdjustment}${adjustmentSymbol}${adjustmentValue}${equalsSign}`;
-            
-            // Exibir a seed na tela
+            // Gera uma seed aleatória para o Minecraft
+            const seed = Math.floor(Math.random() * 1000000); // Seed aleatória entre 0 e 1.000.000
             document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
-
-            // Gerar e exibir o mapa
-            generateMap(surfaceBlocks, layers);
+            generateMap(seed);
         }
 
-        function generateMap(surfaceBlocks, layers) {
+        function generateMap(seed) {
             const mapElement = document.getElementById("map");
             mapElement.innerHTML = ''; // Limpa o mapa anterior
 
-            const layerCount = layers.charCodeAt(0) - 65 + 1; // Converte 'A' a 'Z' em 1 a 26
-            const totalBlocks = 10; // Largura do mapa
+            const totalBlocks = 10; // Largura e altura do mapa
 
-            // Adiciona os blocos ao mapa
+            // Algoritmo simples de geração de mapa baseado na seed
             for (let y = 0; y < totalBlocks; y++) {
                 for (let x = 0; x < totalBlocks; x++) {
                     const block = document.createElement("div");
                     let blockType;
 
-                    // Determina o tipo de bloco baseado na altura
+                    // Determina o tipo de bloco com base na posição e na seed
+                    const randomValue = (seed + x * 31 + y * 17) % 10; // Simulação de geração baseada na seed
+
                     if (y === 0) {
                         blockType = "grass"; // Primeira linha é sempre grama
                         block.textContent = "🟩"; // Bloco de grama
-                    } else if (y <= layerCount) {
-                        blockType = "dirt"; // Linhas abaixo da grama são terra
+                    } else if (y === 1) {
+                        blockType = "dirt"; // Segunda linha é sempre terra
                         block.textContent = "🟫"; // Bloco de terra
+                    } else if (randomValue < 3) {
+                        blockType = "coal"; // 30% de chance de ser carvão
+                        block.textContent = "🪨"; // Bloco de carvão
+                    } else if (randomValue < 6) {
+                        blockType = "iron"; // 30% de chance de ser ferro
+                        block.textContent = "⛏️"; // Bloco de ferro
+                    } else if (randomValue < 8) {
+                        blockType = "gold"; // 20% de chance de ser ouro
+                        block.textContent = "💰"; // Bloco de ouro
                     } else {
-                        blockType = "stone"; // Linhas abaixo das camadas de terra são pedras
-                        block.textContent = "⛰️"; // Bloco de pedra
+                        blockType = "diamond"; // 20% de chance de ser diamante
+                        block.textContent = "💎"; // Bloco de diamante
                     }
 
                     block.className = `block ${blockType}`;
