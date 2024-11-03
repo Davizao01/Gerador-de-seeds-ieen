@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Seeds Aleatórias</title>
+    <title>Gerador de Seeds Aleatórias com Mapa 2D</title>
     <style>
         body {
             display: flex;
@@ -26,18 +26,45 @@
             font-size: 18px;
             cursor: pointer;
         }
+        #map {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            gap: 2px;
+            margin-top: 20px;
+        }
+        .block {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+        }
+        .grass {
+            background-color: green;
+        }
+        .dirt {
+            background-color: brown;
+        }
+        .stone {
+            background-color: gray;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Gerador de Seeds Aleatórias</h1>
-    <p>Clique no botão para gerar uma seed aleatória:</p>
+    <h1>Gerador de Seeds Aleatórias com Mapa 2D</h1>
+    <p>Clique no botão para gerar uma seed aleatória e um mapa:</p>
     
-    <button onclick="generateRandomSeed()">Gerar Seed</button>
+    <button id="generateButton">Gerar Seed e Mapa</button>
     
     <div id="seedDisplay">Sua seed aparecerá aqui</div>
+    <div id="map"></div>
 
     <script>
+        document.getElementById("generateButton").addEventListener("click", generateRandomSeed);
+
         function generateRandomSeed() {
             // Primeiro caractere: número de 1 a 9 para blocos de superfície
             const surfaceBlocks = Math.floor(Math.random() * 9) + 1;
@@ -59,9 +86,43 @@
 
             // Construir a seed com os caracteres gerados
             const seed = `${surfaceBlocks}${layers}${heightAdjustment}${adjustmentSymbol}${adjustmentValue}${equalsSign}`;
-
+            
             // Exibir a seed na tela
             document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
+
+            // Gerar e exibir o mapa
+            generateMap(surfaceBlocks, layers);
+        }
+
+        function generateMap(surfaceBlocks, layers) {
+            const mapElement = document.getElementById("map");
+            mapElement.innerHTML = ''; // Limpa o mapa anterior
+
+            const layerCount = layers.charCodeAt(0) - 65 + 1; // Converte 'A' a 'Z' em 1 a 26
+            const totalBlocks = 10; // Largura do mapa
+
+            // Adiciona os blocos ao mapa
+            for (let y = 0; y < totalBlocks; y++) {
+                for (let x = 0; x < totalBlocks; x++) {
+                    const block = document.createElement("div");
+                    let blockType;
+
+                    // Determina o tipo de bloco baseado na altura
+                    if (y === 0) {
+                        blockType = "grass"; // Primeira linha é sempre grama
+                        block.textContent = "🟩"; // Bloco de grama
+                    } else if (y <= layerCount) {
+                        blockType = "dirt"; // Linhas abaixo da grama são terra
+                        block.textContent = "🟫"; // Bloco de terra
+                    } else {
+                        blockType = "stone"; // Linhas abaixo das camadas de terra são pedras
+                        block.textContent = "⛰️"; // Bloco de pedra
+                    }
+
+                    block.className = `block ${blockType}`;
+                    mapElement.appendChild(block);
+                }
+            }
         }
     </script>
 </body>
