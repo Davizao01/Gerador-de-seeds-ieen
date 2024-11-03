@@ -51,11 +51,14 @@
             // Quarto caractere: aleatório entre - e + (para os ajustes de altura)
             const adjustmentSymbol = heightAdjustment >= 0 ? '+' : '-';
 
+            // Número aleatório entre 0 e 5 para adicionar após o sinal
+            const adjustmentValue = Math.abs(heightAdjustment); // Valor absoluto do ajuste de altura
+
             // Quinto caractere: '=' (pode ser um placeholder ou para representar algo específico)
             const equalsSign = '=';
 
             // Construir a seed com os caracteres gerados
-            const seed = `${surfaceBlocks}${layers}${heightAdjustment}${adjustmentSymbol}${equalsSign}`;
+            const seed = `${surfaceBlocks}${layers}${heightAdjustment}${adjustmentSymbol}${adjustmentValue}${equalsSign}`;
 
             // Exibir a seed na tela
             document.getElementById("seedDisplay").textContent = `Seed gerada: ${seed}`;
