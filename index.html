@@ -10,7 +10,7 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            background-color: #f5f5f5;
+            background-color: #f0f0f5;
             font-family: Arial, sans-serif;
         }
 
@@ -29,12 +29,27 @@
             background-color: #ffffff;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
             max-width: 250px;
             margin-right: 20px;
         }
 
-        /* Grade de pixels */
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin: 5px 0;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
         #grid {
             display: grid;
             gap: 1px;
@@ -48,23 +63,6 @@
             background-color: white;
             width: 30px;
             height: 30px;
-        }
-
-        /* Botão de download */
-        #downloadBtn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        #downloadBtn:hover {
-            background-color: #45a049;
         }
 
         /* Animação */
@@ -93,7 +91,6 @@
             border: 2px solid blue;
         }
 
-        /* Responsivo */
         @media (max-width: 600px) {
             #app-container {
                 flex-direction: column;
@@ -111,16 +108,18 @@
     <div id="app-container">
         <div id="toolbox">
             <h2>Ferramentas</h2>
-            <input type="color" id="colorPicker" value="#000000">
-            <button onclick="savePalette()">Salvar Cor</button>
-            <button onclick="loadPalette()">Carregar Paleta</button>
-            <button onclick="clearGrid()">Limpar Grade</button>
-            <button onclick="undo()">Desfazer (Ctrl + Z)</button>
-            <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
+            <button class="button" onclick="setTool('pencil')">Lápis</button>
+            <button class="button" onclick="setTool('bucket')">Balde de Tinta</button>
+            <input type="color" id="colorPicker" value="#000000" class="button">
+            <button class="button" onclick="savePalette()">Salvar Cor</button>
+            <button class="button" onclick="loadPalette()">Carregar Paleta</button>
+            <button class="button" onclick="clearGrid()">Limpar Grade</button>
+            <button class="button" onclick="undo()">Desfazer (Ctrl + Z)</button>
+            <button class="button" onclick="downloadImage()">Baixar Imagem</button>
             <div id="animationContainer">
                 <h2>Animação</h2>
-                <button onclick="addFrame()">Adicionar Quadro</button>
-                <button onclick="playAnimation()">Reproduzir</button>
+                <button class="button" onclick="addFrame()">Adicionar Quadro</button>
+                <button class="button" onclick="playAnimation()">Reproduzir</button>
                 <div id="frameList"></div>
             </div>
         </div>
@@ -135,17 +134,18 @@
         let history = [];
         let frames = [];
         let currentFrame = 0;
+        let tool = 'pencil';
+        let savedPalette = [];
 
-        // Cria a grade de pixels
         function generateGrid() {
             grid.innerHTML = '';
             grid.style.gridTemplateColumns = `repeat(${gridSize}, 30px)`;
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
-                pixel.addEventListener('mousedown', () => paintPixel(pixel));
+                pixel.addEventListener('mousedown', () => useTool(pixel));
                 pixel.addEventListener('mouseover', () => {
-                    if (mouseDown) paintPixel(pixel);
+                    if (mouseDown) useTool(pixel);
                 });
                 grid.appendChild(pixel);
             }
@@ -155,6 +155,18 @@
         window.addEventListener('mousedown', () => { mouseDown = true; });
         window.addEventListener('mouseup', () => { mouseDown = false; });
 
+        function useTool(pixel) {
+            if (tool === 'pencil') {
+                paintPixel(pixel);
+            } else if (tool === 'bucket') {
+                fill(pixel);
+            }
+        }
+
+        function setTool(selectedTool) {
+            tool = selectedTool;
+        }
+
         function paintPixel(pixel) {
             const previousColor = pixel.style.backgroundColor;
             if (previousColor !== currentColor) {
@@ -163,11 +175,51 @@
             pixel.style.backgroundColor = currentColor;
         }
 
+        function fill(pixel) {
+            const targetColor = pixel.style.backgroundColor;
+            if (targetColor !== currentColor) {
+                floodFill(pixel, targetColor);
+            }
+        }
+
+        function floodFill(pixel, targetColor) {
+            const pixels = Array.from(document.getElementsByClassName('pixel'));
+            const stack = [pixel];
+            while (stack.length > 0) {
+                const node = stack.pop();
+                if (node.style.backgroundColor === targetColor) {
+                    node.style.backgroundColor = currentColor;
+                    const index = pixels.indexOf(node);
+                    if (index % gridSize !== 0) stack.push(pixels[index - 1]);
+                    if (index % gridSize !== gridSize - 1) stack.push(pixels[index + 1]);
+                    if (index - gridSize >= 0) stack.push(pixels[index - gridSize]);
+                    if (index + gridSize < pixels.length) stack.push(pixels[index + gridSize]);
+                }
+            }
+        }
+
         function undo() {
             if (history.length > 0) {
                 const lastAction = history.pop();
                 lastAction.pixel.style.backgroundColor = lastAction.previousColor;
             }
+        }
+
+        function savePalette() {
+            savedPalette.push(currentColor);
+            alert("Cor salva na paleta!");
+        }
+
+        function loadPalette() {
+            if (savedPalette.length === 0) {
+                alert("Nenhuma cor salva na paleta!");
+                return;
+            }
+            let paletteDisplay = "Paleta de Cores:\n";
+            savedPalette.forEach((color, index) => {
+                paletteDisplay += `${index + 1}: ${color}\n`;
+            });
+            alert(paletteDisplay);
         }
 
         function addFrame() {
@@ -213,7 +265,7 @@
 
         function downloadImage() {
             const canvas = document.createElement('canvas');
-            const size = gridSize * 30; 
+            const size = gridSize * 30;
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
@@ -227,9 +279,14 @@
             });
 
             const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'pixel_art.png';
+            link.href = canvas.toDataURL();
+            link.download = 'pixel-art.png';
             link.click();
+        }
+
+        function clearGrid() {
+            document.querySelectorAll('.pixel').forEach(pixel => pixel.style.backgroundColor = 'white');
+            history = [];
         }
 
         colorPicker.addEventListener('input', (e) => {
