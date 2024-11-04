@@ -52,6 +52,13 @@
             margin-top: 10px;
             font-weight: bold;
         }
+        #colorPicker {
+            margin-top: 10px;
+            width: 100px;
+            height: 30px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -61,6 +68,7 @@
         <input type="number" id="sizeInput" min="1" max="512" value="16">
         <button onclick="generateGrid()">Gerar Grade</button>
         <div id="colorPalette"></div>
+        <input type="color" id="colorPicker" value="#000000" onchange="changeColor(this.value)">
         <div id="colorInfo">Cor selecionada: <span id="selectedColor">#000000</span></div>
     </div>
     <div id="grid"></div>
