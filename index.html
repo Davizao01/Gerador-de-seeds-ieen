@@ -1,299 +1,118 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Maker</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            background-color: #f0f0f5;
-            font-family: Arial, sans-serif;
-        }
-
-        #app-container {
-            display: flex;
-            flex-direction: row;
-            margin-top: 20px;
-            width: 90vw;
-            max-width: 1200px;
-        }
-
-        /* Caixa de ferramentas */
-        #toolbox {
-            display: flex;
-            flex-direction: column;
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-            max-width: 250px;
-            margin-right: 20px;
-        }
-
-        .button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            margin: 5px 0;
-            border: none;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
-            text-align: center;
-        }
-
-        .button:hover {
-            background-color: #45a049;
-        }
-
-        #grid {
-            display: grid;
-            gap: 1px;
-            background-color: #ccc;
-            cursor: crosshair;
-            grid-template-columns: repeat(16, 30px);
-            border: 1px solid #ddd;
-        }
-
-        .pixel {
-            background-color: white;
-            width: 30px;
-            height: 30px;
-        }
-
-        /* Animação */
-        #animationContainer {
-            margin-top: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        #frameList {
-            display: flex;
-            margin-top: 10px;
-        }
-
-        .frame {
-            width: 30px;
-            height: 30px;
-            background-color: lightgray;
-            margin: 2px;
-            cursor: pointer;
-            border: 1px solid #999;
-        }
-
-        .selected {
-            border: 2px solid blue;
-        }
-
-        @media (max-width: 600px) {
-            #app-container {
-                flex-direction: column;
-                align-items: center;
-            }
-            #toolbox {
-                max-width: 100%;
-                margin: 0 0 10px 0;
-                width: 100%;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor de Pixel Art</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #333;
+      color: #fff;
+    }
+    #canvasContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+      border: 1px solid #444;
+      background-color: #222;
+      padding: 10px;
+      position: relative;
+    }
+    #canvas {
+      image-rendering: pixelated;
+      background-color: transparent;
+      cursor: crosshair;
+    }
+    #gridControls {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: center;
+    }
+    label {
+      color: #ddd;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #555;
+      border: none;
+      color: #fff;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #666;
+    }
+  </style>
 </head>
 <body>
-    <div id="app-container">
-        <div id="toolbox">
-            <h2>Ferramentas</h2>
-            <button class="button" onclick="setTool('pencil')">Lápis</button>
-            <button class="button" onclick="setTool('bucket')">Balde de Tinta</button>
-            <input type="color" id="colorPicker" value="#000000" class="button">
-            <button class="button" onclick="savePalette()">Salvar Cor</button>
-            <button class="button" onclick="loadPalette()">Carregar Paleta</button>
-            <button class="button" onclick="clearGrid()">Limpar Grade</button>
-            <button class="button" onclick="undo()">Desfazer (Ctrl + Z)</button>
-            <button class="button" onclick="downloadImage()">Baixar Imagem</button>
-            <div id="animationContainer">
-                <h2>Animação</h2>
-                <button class="button" onclick="addFrame()">Adicionar Quadro</button>
-                <button class="button" onclick="playAnimation()">Reproduzir</button>
-                <div id="frameList"></div>
-            </div>
-        </div>
-        <div id="grid"></div>
+
+  <h1>Editor de Pixel Art</h1>
+
+  <div id="canvasContainer">
+    <canvas id="canvas" width="256" height="256"></canvas>
+    <div id="gridControls">
+      <label for="pixelSize">Tamanho do Pixel:</label>
+      <input type="number" id="pixelSize" value="16" min="1" max="64">
+      <label for="gridSpacing">Espaçamento da Grid:</label>
+      <input type="number" id="gridSpacing" value="0" min="0" max="10">
+      <button onclick="clearCanvas()">Limpar</button>
     </div>
+  </div>
 
-    <script>
-        const gridSize = 16;
-        const grid = document.getElementById('grid');
-        const colorPicker = document.getElementById('colorPicker');
-        let currentColor = colorPicker.value;
-        let history = [];
-        let frames = [];
-        let currentFrame = 0;
-        let tool = 'pencil';
-        let savedPalette = [];
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const pixelSizeInput = document.getElementById('pixelSize');
+    const gridSpacingInput = document.getElementById('gridSpacing');
+    let pixelSize = parseInt(pixelSizeInput.value);
+    let gridSpacing = parseInt(gridSpacingInput.value);
+    
+    // Desenhar a grid com configurações ajustáveis
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+      for (let x = 0; x < canvas.width; x += pixelSize + gridSpacing) {
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+      }
+      for (let y = 0; y < canvas.height; y += pixelSize + gridSpacing) {
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+      }
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    
+    // Atualizar a grid e o pixel size ao alterar o valor nos inputs
+    pixelSizeInput.addEventListener('input', () => {
+      pixelSize = parseInt(pixelSizeInput.value);
+      drawGrid();
+    });
 
-        function generateGrid() {
-            grid.innerHTML = '';
-            grid.style.gridTemplateColumns = `repeat(${gridSize}, 30px)`;
-            for (let i = 0; i < gridSize * gridSize; i++) {
-                const pixel = document.createElement('div');
-                pixel.className = 'pixel';
-                pixel.addEventListener('mousedown', () => useTool(pixel));
-                pixel.addEventListener('mouseover', () => {
-                    if (mouseDown) useTool(pixel);
-                });
-                grid.appendChild(pixel);
-            }
-        }
+    gridSpacingInput.addEventListener('input', () => {
+      gridSpacing = parseInt(gridSpacingInput.value);
+      drawGrid();
+    });
+    
+    // Limpar o canvas
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGrid();
+    }
 
-        let mouseDown = false;
-        window.addEventListener('mousedown', () => { mouseDown = true; });
-        window.addEventListener('mouseup', () => { mouseDown = false; });
+    // Iniciar o desenho da grid ao carregar
+    drawGrid();
+  </script>
 
-        function useTool(pixel) {
-            if (tool === 'pencil') {
-                paintPixel(pixel);
-            } else if (tool === 'bucket') {
-                fill(pixel);
-            }
-        }
-
-        function setTool(selectedTool) {
-            tool = selectedTool;
-        }
-
-        function paintPixel(pixel) {
-            const previousColor = pixel.style.backgroundColor;
-            if (previousColor !== currentColor) {
-                history.push({ pixel, previousColor });
-            }
-            pixel.style.backgroundColor = currentColor;
-        }
-
-        function fill(pixel) {
-            const targetColor = pixel.style.backgroundColor;
-            if (targetColor !== currentColor) {
-                floodFill(pixel, targetColor);
-            }
-        }
-
-        function floodFill(pixel, targetColor) {
-            const pixels = Array.from(document.getElementsByClassName('pixel'));
-            const stack = [pixel];
-            while (stack.length > 0) {
-                const node = stack.pop();
-                if (node.style.backgroundColor === targetColor) {
-                    node.style.backgroundColor = currentColor;
-                    const index = pixels.indexOf(node);
-                    if (index % gridSize !== 0) stack.push(pixels[index - 1]);
-                    if (index % gridSize !== gridSize - 1) stack.push(pixels[index + 1]);
-                    if (index - gridSize >= 0) stack.push(pixels[index - gridSize]);
-                    if (index + gridSize < pixels.length) stack.push(pixels[index + gridSize]);
-                }
-            }
-        }
-
-        function undo() {
-            if (history.length > 0) {
-                const lastAction = history.pop();
-                lastAction.pixel.style.backgroundColor = lastAction.previousColor;
-            }
-        }
-
-        function savePalette() {
-            savedPalette.push(currentColor);
-            alert("Cor salva na paleta!");
-        }
-
-        function loadPalette() {
-            if (savedPalette.length === 0) {
-                alert("Nenhuma cor salva na paleta!");
-                return;
-            }
-            let paletteDisplay = "Paleta de Cores:\n";
-            savedPalette.forEach((color, index) => {
-                paletteDisplay += `${index + 1}: ${color}\n`;
-            });
-            alert(paletteDisplay);
-        }
-
-        function addFrame() {
-            const frame = document.createElement('div');
-            frame.className = 'frame';
-            frame.onclick = () => selectFrame(frames.length);
-            frames.push([]);
-            document.getElementById('frameList').appendChild(frame);
-            updateFrameList();
-        }
-
-        function selectFrame(index) {
-            currentFrame = index;
-            loadFrame(currentFrame);
-            updateFrameList();
-        }
-
-        function loadFrame(index) {
-            const pixels = document.querySelectorAll('.pixel');
-            const frameData = frames[index] || [];
-            pixels.forEach((pixel, i) => {
-                pixel.style.backgroundColor = frameData[i] || 'white';
-            });
-        }
-
-        function playAnimation() {
-            let frameIndex = 0;
-            const interval = setInterval(() => {
-                loadFrame(frameIndex);
-                frameIndex++;
-                if (frameIndex >= frames.length) frameIndex = 0;
-            }, 500);
-        }
-
-        function updateFrameList() {
-            const frameList = document.getElementById('frameList');
-            const framesDivs = frameList.querySelectorAll('.frame');
-            framesDivs.forEach((frameDiv, index) => {
-                frameDiv.classList.remove('selected');
-                if (index === currentFrame) frameDiv.classList.add('selected');
-            });
-        }
-
-        function downloadImage() {
-            const canvas = document.createElement('canvas');
-            const size = gridSize * 30;
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach((pixel, i) => {
-                const row = Math.floor(i / gridSize);
-                const col = i % gridSize;
-                ctx.fillStyle = pixel.style.backgroundColor || 'white';
-                ctx.fillRect(col * 30, row * 30, 30, 30);
-            });
-
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL();
-            link.download = 'pixel-art.png';
-            link.click();
-        }
-
-        function clearGrid() {
-            document.querySelectorAll('.pixel').forEach(pixel => pixel.style.backgroundColor = 'white');
-            history = [];
-        }
-
-        colorPicker.addEventListener('input', (e) => {
-            currentColor = e.target.value;
-        });
-
-        generateGrid();
-    </script>
 </body>
 </html>
