@@ -61,6 +61,7 @@
             <button onclick="loadPalette()">Carregar Paleta</button>
             <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
             <button onclick="clearGrid()">Limpar Grade</button>
+            <button onclick="undo()">Desfazer</button>
         </div>
         <div id="grid"></div>
     </div>
@@ -70,6 +71,7 @@
         const grid = document.getElementById('grid');
         const colorPicker = document.getElementById('colorPicker');
         let currentColor = colorPicker.value;
+        let history = [];
 
         // Gera a grade de pixels
         function generateGrid() {
@@ -89,12 +91,25 @@
 
         // Função que pinta o pixel
         function paintPixel(pixel) {
+            // Salva a cor anterior do pixel antes de pintar
+            const previousColor = pixel.style.backgroundColor;
+            if (previousColor !== currentColor) {
+                history.push({ pixel, previousColor });
+            }
             pixel.style.backgroundColor = currentColor;
         }
 
         // Adiciona eventos de mouse para permitir arrastar e pintar
         window.addEventListener('mousedown', () => { mouseDown = true; });
         window.addEventListener('mouseup', () => { mouseDown = false; });
+
+        // Função para desfazer a última ação
+        function undo() {
+            if (history.length > 0) {
+                const lastAction = history.pop();
+                lastAction.pixel.style.backgroundColor = lastAction.previousColor;
+            }
+        }
 
         function savePalette() {
             const color = colorPicker.value.trim();
@@ -165,10 +180,19 @@
         function clearGrid() {
             const pixels = document.querySelectorAll('.pixel');
             pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
+            history = []; // Limpa o histórico ao limpar a grade
         }
 
         // Gera a grade inicial ao carregar
         generateGrid();
+
+        // Adiciona o evento para capturar o Ctrl + Z
+        window.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === 'z') {
+                undo();
+                event.preventDefault(); // Evita o comportamento padrão do navegador
+            }
+        });
     </script>
 </body>
 </html>
