@@ -24,13 +24,13 @@
             gap: 1px;
             margin: 20px;
             background-color: #ccc;
+            cursor: crosshair;
         }
         .pixel {
             width: 20px;
             height: 20px;
             background-color: white;
             border: 1px solid #ddd;
-            cursor: pointer;
         }
         .toolbox {
             display: flex;
@@ -38,6 +38,7 @@
             padding: 20px;
             background-color: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-right: 20px;
         }
         .paletteColor {
             width: 30px;
@@ -59,10 +60,7 @@
             <button onclick="savePalette()">Salvar Cor</button>
             <button onclick="loadPalette()">Carregar Paleta</button>
             <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
-            <button onclick="createNewFrame()">Novo Quadro</button>
-            <button onclick="playAnimation()">Reproduzir Animação</button>
-            <button onclick="undoAction()">Desfazer</button>
-            <div id="palette"></div>
+            <button onclick="clearGrid()">Limpar Grade</button>
         </div>
         <div id="grid"></div>
     </div>
@@ -72,57 +70,63 @@
         const grid = document.getElementById('grid');
         const colorPicker = document.getElementById('colorPicker');
         let currentColor = colorPicker.value;
-        const frames = [];
-        let currentFrame = 0;
-        const actionHistory = [];
 
+        // Gera a grade de pixels
         function generateGrid() {
             grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
-                pixel.addEventListener('click', () => paintPixel(pixel));
+                pixel.addEventListener('mousedown', () => paintPixel(pixel));
+                pixel.addEventListener('mouseover', () => {
+                    if (mouseDown) paintPixel(pixel);
+                });
                 grid.appendChild(pixel);
             }
         }
 
+        let mouseDown = false;
+
+        // Função que pinta o pixel
         function paintPixel(pixel) {
-            const lastColor = pixel.style.backgroundColor;
             pixel.style.backgroundColor = currentColor;
-            actionHistory.push({ action: 'paint', pixel: pixel, color: lastColor });
         }
+
+        // Adiciona eventos de mouse para permitir arrastar e pintar
+        window.addEventListener('mousedown', () => { mouseDown = true; });
+        window.addEventListener('mouseup', () => { mouseDown = false; });
 
         function savePalette() {
             const color = colorPicker.value.trim();
-            const palette = document.getElementById('palette');
-            const colorDiv = document.createElement('div');
-            colorDiv.className = 'paletteColor';
-            colorDiv.style.backgroundColor = color;
-            colorDiv.addEventListener('click', () => {
+            const palette = document.createElement('div');
+            palette.className = 'paletteColor';
+            palette.style.backgroundColor = color;
+            palette.onclick = () => {
                 colorPicker.value = color;
                 currentColor = color;
-            });
-            palette.appendChild(colorDiv);
+            };
+            document.body.appendChild(palette);
         }
 
         function loadPalette() {
             const colors = prompt("Insira as cores da paleta separadas por vírgula (ex: #FF0000,#00FF00,#0000FF):");
-            const colorArray = colors.split(',');
-            const palette = document.getElementById('palette');
-            palette.innerHTML = ''; // Limpa a paleta anterior
-            colorArray.forEach(color => {
-                const colorDiv = document.createElement('div');
-                colorDiv.className = 'paletteColor';
-                colorDiv.style.backgroundColor = color.trim();
-                colorDiv.addEventListener('click', () => {
-                    colorPicker.value = color.trim();
-                    currentColor = color.trim();
+            if (colors) {
+                const colorArray = colors.split(',');
+                const palette = document.createElement('div');
+                colorArray.forEach(color => {
+                    const colorDiv = document.createElement('div');
+                    colorDiv.className = 'paletteColor';
+                    colorDiv.style.backgroundColor = color.trim();
+                    colorDiv.onclick = () => {
+                        colorPicker.value = color.trim();
+                        currentColor = color.trim();
+                    };
+                    palette.appendChild(colorDiv);
                 });
-                palette.appendChild(colorDiv);
-            });
+                document.body.appendChild(palette);
+            }
         }
 
-        // Carrega a paleta a partir de uma imagem
         function loadPaletteFromImage(event) {
             const file = event.target.files[0];
             const reader = new FileReader();
@@ -140,62 +144,28 @@
                         const rgba = `rgba(${imageData[i]},${imageData[i + 1]},${imageData[i + 2]},${imageData[i + 3]})`;
                         colors.add(rgba);
                     }
-                    const palette = document.getElementById('palette');
-                    palette.innerHTML = ''; // Limpa a paleta anterior
+                    const palette = document.createElement('div');
                     colors.forEach(color => {
                         const colorDiv = document.createElement('div');
                         colorDiv.className = 'paletteColor';
                         colorDiv.style.backgroundColor = color;
-                        colorDiv.addEventListener('click', () => {
+                        colorDiv.onclick = () => {
                             colorPicker.value = color;
                             currentColor = color;
-                        });
+                        };
                         palette.appendChild(colorDiv);
                     });
+                    document.body.appendChild(palette);
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        // Cria um novo quadro para animação
-        function createNewFrame() {
-            const size = parseInt(document.getElementById('gridSize').value);
-            frames.push(grid.innerHTML);
-            currentFrame = frames.length - 1; // Atualiza o índice do quadro atual
-            alert('Novo quadro criado!');
+        function clearGrid() {
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach(pixel => pixel.style.backgroundColor = 'white');
         }
-
-        // Reproduz a animação
-        function playAnimation() {
-            if (frames.length === 0) {
-                alert('Nenhum quadro criado!');
-                return;
-            }
-            let frameIndex = 0;
-            const interval = setInterval(() => {
-                grid.innerHTML = frames[frameIndex];
-                frameIndex = (frameIndex + 1) % frames.length;
-            }, 500); // Troca de quadro a cada 500 ms
-            setTimeout(() => clearInterval(interval), frames.length * 500); // Para a animação após mostrar todos os quadros
-        }
-
-        // Undo action
-        function undoAction() {
-            if (actionHistory.length === 0) return;
-            const lastAction = actionHistory.pop();
-            if (lastAction.action === 'paint') {
-                lastAction.pixel.style.backgroundColor = lastAction.color;
-            }
-            // Adicione mais lógica se necessário
-        }
-
-        // Captura Ctrl + Z para desfazer
-        window.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'z') {
-                undoAction();
-            }
-        });
 
         // Gera a grade inicial ao carregar
         generateGrid();
