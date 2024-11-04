@@ -44,7 +44,7 @@
         #toolSelector {
             margin: 10px 0;
         }
-        #downloadBtn, #savePaletteBtn {
+        #downloadBtn, #savePaletteBtn, #loadPaletteBtn {
             margin-top: 10px;
         }
         #palette {
@@ -89,6 +89,7 @@
         </select>
         <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
         <button id="savePaletteBtn" onclick="savePalette()">Salvar Paleta</button>
+        <button id="loadPaletteBtn" onclick="loadPalette()">Carregar Paleta</button>
         <div id="palette"></div>
     </div>
     
@@ -232,6 +233,26 @@
             paletteContainer.appendChild(colorDiv);
         }
 
+        function loadPalette() {
+            const paletteContainer = document.getElementById('palette');
+            const savedPalette = prompt("Insira suas cores (ex: #FF0000,#00FF00,#0000FF)"); // Aceita cores separadas por vírgula
+            if (savedPalette) {
+                const colors = savedPalette.split(',');
+                paletteContainer.innerHTML = ''; // Limpa a paleta atual
+                colors.forEach(color => {
+                    const colorDiv = document.createElement('div');
+                    colorDiv.className = 'paletteColor';
+                    colorDiv.style.backgroundColor = color.trim();
+                    colorDiv.addEventListener('click', () => {
+                        colorPicker.value = color.trim();
+                        currentColor = color.trim();
+                    });
+                    paletteContainer.appendChild(colorDiv);
+                });
+            }
+        }
+
+        // Gera a grade inicial ao carregar
         generateGrid();
     </script>
 </body>
