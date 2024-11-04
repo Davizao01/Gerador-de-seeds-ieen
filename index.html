@@ -7,71 +7,79 @@
     <style>
         body {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            height: 100vh;
+            flex-direction: column;
+            align-items: center;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #f5f5f5;
             font-family: Arial, sans-serif;
-            overflow: hidden; /* Impede rolagem */
         }
-        #container {
+
+        #app-container {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            flex-wrap: wrap; /* Permite que os itens se movam para a próxima linha em telas pequenas */
-            max-width: 90%; /* Define uma largura máxima para o container */
+            flex-direction: row;
+            margin-top: 20px;
+            width: 90vw;
+            max-width: 1200px;
         }
+
+        /* Caixa de ferramentas */
+        #toolbox {
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 250px;
+            margin-right: 20px;
+        }
+
+        /* Grade de pixels */
         #grid {
             display: grid;
             gap: 1px;
-            margin: 20px;
             background-color: #ccc;
             cursor: crosshair;
-            grid-template-columns: repeat(16, 30px); /* Aumenta o tamanho dos pixels */
+            grid-template-columns: repeat(16, 30px);
+            border: 1px solid #ddd;
         }
+
         .pixel {
             background-color: white;
-            border: 1px solid #ddd;
-            width: 30px; /* Define largura fixa */
-            height: 30px; /* Define altura fixa */
-        }
-        .toolbox {
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            margin-right: 20px;
-            min-width: 200px; /* Define uma largura mínima */
-            max-height: 90vh; /* Limita a altura da toolbox */
-            overflow-y: auto; /* Permite rolagem se necessário */
-        }
-        .paletteColor {
             width: 30px;
             height: 30px;
-            margin: 2px;
+        }
+
+        /* Botão de download */
+        #downloadBtn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: center;
+            border: none;
             cursor: pointer;
-            border: 1px solid #000;
+            border-radius: 4px;
+            font-size: 16px;
         }
-        h2 {
-            margin: 0 0 10px 0;
+
+        #downloadBtn:hover {
+            background-color: #45a049;
         }
+
+        /* Animação */
         #animationContainer {
+            margin-top: 20px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            width: 100%;
-            margin-top: 20px;
         }
-        #animationControls {
-            margin-top: 10px;
-        }
+
         #frameList {
             display: flex;
             margin-top: 10px;
-            flex-wrap: wrap; /* Permite que os quadros se movam para a próxima linha */
         }
+
         .frame {
             width: 30px;
             height: 30px;
@@ -80,72 +88,58 @@
             cursor: pointer;
             border: 1px solid #999;
         }
+
         .selected {
             border: 2px solid blue;
         }
-        #layerContainer {
-            margin-top: 20px;
-        }
-        /* Ajustes para telas pequenas */
+
+        /* Responsivo */
         @media (max-width: 600px) {
-            .toolbox {
-                margin-right: 0; /* Remove margem em dispositivos móveis */
-                width: 100%; /* Painel ocupa toda a largura */
-                order: 1; /* Coloca a toolbox no topo em telas pequenas */
+            #app-container {
+                flex-direction: column;
+                align-items: center;
             }
-            #grid {
-                margin: 0; /* Remove margem da grade */
-            }
-            #animationContainer {
-                order: 2; /* Coloca a animação abaixo da toolbox em telas pequenas */
-                width: 100%; /* Animação ocupa toda a largura */
-            }
-            .pixel {
-                width: 20px; /* Adapta o tamanho dos pixels ao viewport em telas pequenas */
-                height: 20px; /* Mantém a proporção quadrada */
+            #toolbox {
+                max-width: 100%;
+                margin: 0 0 10px 0;
+                width: 100%;
             }
         }
     </style>
 </head>
 <body>
-    <div id="container">
-        <div class="toolbox">
+    <div id="app-container">
+        <div id="toolbox">
             <h2>Ferramentas</h2>
             <input type="color" id="colorPicker" value="#000000">
             <button onclick="savePalette()">Salvar Cor</button>
             <button onclick="loadPalette()">Carregar Paleta</button>
-            <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
             <button onclick="clearGrid()">Limpar Grade</button>
             <button onclick="undo()">Desfazer (Ctrl + Z)</button>
-            <h2>Animação</h2>
-            <button onclick="addFrame()">Adicionar Quadro</button>
-            <button onclick="playAnimation()">Reproduzir Animação</button>
-            <div id="frameList"></div>
-            <h2>Camadas</h2>
-            <button onclick="addLayer()">Adicionar Camada</button>
-            <div id="layerContainer"></div>
+            <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
+            <div id="animationContainer">
+                <h2>Animação</h2>
+                <button onclick="addFrame()">Adicionar Quadro</button>
+                <button onclick="playAnimation()">Reproduzir</button>
+                <div id="frameList"></div>
+            </div>
         </div>
         <div id="grid"></div>
     </div>
-    <div id="animationContainer">
-        <h2>Quadros de Animação</h2>
-        <div id="animationControls"></div>
-    </div>
 
     <script>
-        const gridSize = 16; // Tamanho da grade
+        const gridSize = 16;
         const grid = document.getElementById('grid');
         const colorPicker = document.getElementById('colorPicker');
         let currentColor = colorPicker.value;
         let history = [];
         let frames = [];
-        let layers = [[]]; // Array de camadas
         let currentFrame = 0;
-        let currentLayer = 0;
 
-        // Gera a grade de pixels
+        // Cria a grade de pixels
         function generateGrid() {
-            grid.style.gridTemplateColumns = `repeat(${gridSize}, 30px)`; // Define largura fixa
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 30px)`;
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
@@ -154,32 +148,25 @@
                     if (mouseDown) paintPixel(pixel);
                 });
                 grid.appendChild(pixel);
-                layers[0][i] = 'white'; // Inicializa a primeira camada
             }
         }
 
         let mouseDown = false;
+        window.addEventListener('mousedown', () => { mouseDown = true; });
+        window.addEventListener('mouseup', () => { mouseDown = false; });
 
-        // Função que pinta o pixel
         function paintPixel(pixel) {
             const previousColor = pixel.style.backgroundColor;
             if (previousColor !== currentColor) {
                 history.push({ pixel, previousColor });
             }
             pixel.style.backgroundColor = currentColor;
-            layers[currentLayer][Array.from(grid.children).indexOf(pixel)] = currentColor; // Atualiza a camada atual
         }
 
-        // Adiciona eventos de mouse para permitir arrastar e pintar
-        window.addEventListener('mousedown', () => { mouseDown = true; });
-        window.addEventListener('mouseup', () => { mouseDown = false; });
-
-        // Função para desfazer a última ação
         function undo() {
             if (history.length > 0) {
                 const lastAction = history.pop();
                 lastAction.pixel.style.backgroundColor = lastAction.previousColor;
-                layers[currentLayer][Array.from(grid.children).indexOf(lastAction.pixel)] = lastAction.previousColor; // Atualiza a camada
             }
         }
 
@@ -211,10 +198,8 @@
             const interval = setInterval(() => {
                 loadFrame(frameIndex);
                 frameIndex++;
-                if (frameIndex >= frames.length) {
-                    frameIndex = 0; // Volta ao primeiro quadro
-                }
-            }, 500); // Altere o tempo de reprodução conforme necessário
+                if (frameIndex >= frames.length) frameIndex = 0;
+            }, 500);
         }
 
         function updateFrameList() {
@@ -222,20 +207,36 @@
             const framesDivs = frameList.querySelectorAll('.frame');
             framesDivs.forEach((frameDiv, index) => {
                 frameDiv.classList.remove('selected');
-                if (index === currentFrame) {
-                    frameDiv.classList.add('selected');
-                }
+                if (index === currentFrame) frameDiv.classList.add('selected');
             });
         }
 
-        function addLayer() {
-            const layer = layers.length;
-            layers.push(new Array(gridSize * gridSize).fill('white'));
-            const layerDiv = document.createElement('div');
-            layerDiv.innerText = `Camada ${layer + 1}`;
-            layerDiv.onclick = () => selectLayer(layer);
-            document.getElementById('layerContainer').appendChild(layerDiv);
+        function downloadImage() {
+            const canvas = document.createElement('canvas');
+            const size = gridSize * 30; 
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach((pixel, i) => {
+                const row = Math.floor(i / gridSize);
+                const col = i % gridSize;
+                ctx.fillStyle = pixel.style.backgroundColor || 'white';
+                ctx.fillRect(col * 30, row * 30, 30, 30);
+            });
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            link.download = 'pixel_art.png';
+            link.click();
         }
 
-        function selectLayer(index) {
-           
+        colorPicker.addEventListener('input', (e) => {
+            currentColor = e.target.value;
+        });
+
+        generateGrid();
+    </script>
+</body>
+</html>
