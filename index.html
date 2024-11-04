@@ -117,6 +117,7 @@
                 <button onclick="playAnimation()">Reproduzir</button>
                 <div id="frameList"></div>
             </div>
+            <div id="palette"></div> <!-- Div para exibir paleta -->
         </div>
         <div id="grid"></div>
     </div>
@@ -129,6 +130,7 @@
         let history = [];
         let frames = [];
         let currentFrame = 0;
+        let palette = []; // Array para armazenar as cores da paleta
 
         // Cria a grade de pixels
         function generateGrid() {
@@ -202,6 +204,36 @@
             framesDivs.forEach((frameDiv, index) => {
                 frameDiv.classList.remove('selected');
                 if (index === currentFrame) frameDiv.classList.add('selected');
+            });
+        }
+
+        function savePalette() {
+            const color = colorPicker.value;
+            if (!palette.includes(color)) {
+                palette.push(color);
+                updatePaletteDisplay();
+            }
+        }
+
+        function loadPalette() {
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach((pixel, index) => {
+                pixel.style.backgroundColor = palette[index] || 'white';
+            });
+        }
+
+        function updatePaletteDisplay() {
+            const paletteDiv = document.getElementById('palette');
+            paletteDiv.innerHTML = ''; // Limpa a paleta atual
+            palette.forEach(color => {
+                const colorBox = document.createElement('div');
+                colorBox.className = 'paletteColor';
+                colorBox.style.backgroundColor = color;
+                colorBox.onclick = () => {
+                    currentColor = color; // Define a cor atual para o clique na paleta
+                    colorPicker.value = color; // Atualiza o seletor de cores
+                };
+                paletteDiv.appendChild(colorBox);
             });
         }
 
