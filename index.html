@@ -52,12 +52,18 @@
         }
 
         /* Paleta de Cores */
-        #palette {
+        #palette-container {
             display: flex;
             flex-direction: column;
+            margin-left: 20px; /* Espaçamento entre grid e paleta */
+        }
+
+        #palette {
+            display: flex;
+            flex-wrap: wrap;
             margin-top: 10px;
-            overflow-y: auto; /* Permite rolagem vertical */
             max-height: 200px; /* Altura máxima da paleta */
+            overflow-y: auto; /* Permite rolagem vertical */
         }
 
         .paletteColor {
@@ -128,12 +134,14 @@
             <button onclick="setTool('eraser')">Borracha</button>
             <button onclick="setTool('bucket')">Balde de Tinta</button>
             <button onclick="downloadImage()">Baixar Imagem</button> <!-- Botão para baixar a imagem -->
+        </div>
+        <div id="grid"></div>
+        <div id="palette-container">
             <h2>Carregar Paleta</h2>
             <input type="file" id="paletteLoader" accept="image/*" onchange="loadPaletteFromImage(event)">
             <h2>Paleta de Cores</h2>
             <div id="palette"></div> <!-- Div para exibir paleta -->
         </div>
-        <div id="grid"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
@@ -269,8 +277,33 @@
             });
         }
 
-        function updateCurrentColor() {
-            currentColor = colorPicker.value; // Atualiza a cor atual
+        function loadPaletteFromImage(event) {
+            const file = event.target.files[0];
+            const img = new Image();
+            img.src = URL.createObjectURL(file);
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const colors = {};
+
+                for (let i = 0; i < imageData.data.length; i += 4) {
+                    const r = imageData.data[i];
+                    const g = imageData.data[i + 1];
+                    const b = imageData.data[i + 2];
+                    const a = imageData.data[i + 3];
+                    if (a > 0) { // Se a cor não é transparente
+                        const color = `rgb(${r}, ${g}, ${b})`;
+                        colors[color] = true;
+                    }
+                }
+
+                palette = Object.keys(colors);
+                updatePaletteDisplay(); // Atualiza a exibição da paleta de cores
+            };
         }
 
         function clearGrid() {
@@ -278,54 +311,23 @@
             pixels.forEach(pixel => {
                 pixel.style.backgroundColor = 'white';
             });
-            history = []; // Limpa histórico
-        }
-
-        function loadPaletteFromImage(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const colors = new Set(); // Para evitar cores duplicadas
-
-                    for (let i = 0; i < imageData.data.length; i += 4) {
-                        const r = imageData.data[i];
-                        const g = imageData.data[i + 1];
-                        const b = imageData.data[i + 2];
-                        const a = imageData.data[i + 3];
-
-                        // Ignora pixels transparentes
-                        if (a > 0) {
-                            const color = `rgb(${r}, ${g}, ${b})`;
-                            colors.add(color);
-                        }
-                    }
-
-                    palette = Array.from(colors);
-                    updatePaletteDisplay(); // Atualiza a exibição da paleta
-                };
-            };
-            reader.readAsDataURL(file);
+            history = []; // Limpa histórico ao limpar grade
         }
 
         function downloadImage() {
             html2canvas(grid).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'pixel-art.png';
+                link.download = 'pixel_art.png';
                 link.href = canvas.toDataURL();
                 link.click();
             });
         }
 
-        generateGrid(); // Inicializa a grade
+        function updateCurrentColor() {
+            currentColor = colorPicker.value; // Atualiza a cor atual com a do seletor
+        }
+
+        generateGrid(); // Gera a grade ao iniciar
     </script>
 </body>
 </html>
