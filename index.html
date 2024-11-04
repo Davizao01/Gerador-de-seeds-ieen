@@ -3,91 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paint e Pixel Art</title>
+    <title>Pixel Art Creator</title>
     <style>
         body {
             display: flex;
-            flex-direction: row;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
             font-family: Arial, sans-serif;
             margin: 0;
-            background-color: #f4f4f4;
-            height: 100vh;
-        }
-        #canvas {
-            border: 1px solid #000;
-            cursor: crosshair;
-            display: none; /* Esconde inicialmente */
-        }
-        #grid {
-            display: none; /* Esconde inicialmente */
-            margin: 10px 0;
-            display: grid;
+            background-color: #e6e6e6;
         }
         #controls {
             display: flex;
             flex-direction: column;
-            margin-right: 20px;
+            margin: 20px;
             padding: 10px;
             background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        #grid {
+            display: grid;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .pixel {
+            width: 20px;
+            height: 20px;
             border: 1px solid #ccc;
-            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        #sizeInput {
+            margin: 5px 0;
+        }
+        #colorPalette {
+            display: flex;
+            margin-top: 10px;
+            flex-wrap: wrap;
         }
         .color {
             width: 30px;
             height: 30px;
-            display: inline-block;
-            cursor: pointer;
             border: 1px solid #000;
-            margin-right: 5px;
-        }
-        #brushSize {
-            width: 50px;
-            margin-left: 10px;
-        }
-        #toggleButton {
-            margin-top: 20px;
-            padding: 10px;
+            margin: 2px;
             cursor: pointer;
         }
-        #colorWheel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        #colorInfo {
+            margin-top: 10px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
+
     <div id="controls">
-        <button id="toggleButton" onclick="toggleMode()">Modo Pixel Art</button>
+        <label for="sizeInput">Tamanho do Pixel Art (até 512x512):</label>
+        <input type="number" id="sizeInput" min="1" max="512" value="16">
+        <button onclick="generateGrid()">Gerar Grade</button>
         <div id="colorPalette"></div>
-        <label for="brushSize">Tamanho do Pincel:</label>
-        <input type="range" id="brushSize" min="1" max="100" value="5">
-        <label for="gridSize">Tamanho da Grade:</label>
-        <select id="gridSize" onchange="changeGridSize()">
-            <option value="16">16x16</option>
-            <option value="32">32x32</option>
-            <option value="64">64x64</option>
-        </select>
+        <div id="colorInfo">Cor selecionada: <span id="selectedColor">#000000</span></div>
     </div>
-    <canvas id="canvas" width="800" height="600"></canvas>
     <div id="grid"></div>
-    
-    <input type="color" id="colorWheel" value="#000000" onchange="changeColor(this.value)">
 
     <script>
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
         const grid = document.getElementById('grid');
         const colorPalette = document.getElementById('colorPalette');
-        const brushSizeInput = document.getElementById('brushSize');
-
-        let painting = false;
+        const sizeInput = document.getElementById('sizeInput');
+        const selectedColorInfo = document.getElementById('selectedColor');
         let brushColor = '#000000';
-        let brushSize = 5;
-        let isPixelArtMode = false;
-        let gridSize = 16;
-        const colors = generateRandomColors(8);
 
         // Gera cores aleatórias
         function generateRandomColors(num) {
@@ -101,6 +84,7 @@
 
         // Atualiza a paleta de cores
         function updateColorPalette() {
+            const colors = generateRandomColors(8);
             colorPalette.innerHTML = '';
             colors.forEach(color => {
                 const colorDiv = document.createElement('div');
@@ -111,80 +95,30 @@
             });
         }
 
-        // Alterna entre os modos
-        function toggleMode() {
-            isPixelArtMode = !isPixelArtMode;
-            if (isPixelArtMode) {
-                toggleButton.textContent = 'Modo Paint';
-                canvas.style.display = 'none';
-                grid.style.display = 'grid';
-                grid.style.gridTemplateColumns = `repeat(${gridSize}, 20px)`;
-                grid.style.gridTemplateRows = `repeat(${gridSize}, 20px)`;
-                grid.style.gap = '1px';
-                grid.innerHTML = ''; // Limpa a grade anterior
-
-                for (let i = 0; i < gridSize * gridSize; i++) {
-                    const pixel = document.createElement('div');
-                    pixel.style.width = '20px';
-                    pixel.style.height = '20px';
-                    pixel.style.border = '1px solid #ddd';
-                    pixel.style.boxSizing = 'border-box';
-                    pixel.onclick = () => {
-                        pixel.style.backgroundColor = brushColor;
-                    };
-                    grid.appendChild(pixel);
-                }
-            } else {
-                toggleButton.textContent = 'Modo Pixel Art';
-                canvas.style.display = 'block';
-                grid.style.display = 'none';
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                updateColorPalette();
-            }
-        }
-
         // Altera a cor do pincel
         function changeColor(color) {
             brushColor = color;
+            selectedColorInfo.textContent = color;
         }
 
-        // Modo Paint
-        function startPosition(e) {
-            painting = true;
-            draw(e);
-        }
+        // Gera a grade de pixels
+        function generateGrid() {
+            const size = parseInt(sizeInput.value);
+            if (size < 1 || size > 512) {
+                alert("O tamanho deve estar entre 1 e 512.");
+                return;
+            }
+            grid.innerHTML = ''; // Limpa a grade anterior
+            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${size}, 1fr)`;
 
-        function endPosition() {
-            painting = false;
-            ctx.beginPath();
-        }
-
-        function draw(e) {
-            if (!painting) return;
-
-            ctx.lineWidth = brushSize;
-            ctx.lineCap = 'round';
-            ctx.strokeStyle = brushColor;
-
-            ctx.lineTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(e.clientX - canvas.offsetLeft, e.clientY - canvas.offsetTop);
-        }
-
-        canvas.addEventListener('mousedown', startPosition);
-        canvas.addEventListener('mouseup', endPosition);
-        canvas.addEventListener('mousemove', draw);
-        brushSizeInput.addEventListener('input', (e) => {
-            brushSize = e.target.value;
-        });
-
-        // Muda o tamanho da grade
-        function changeGridSize() {
-            gridSize = document.getElementById('gridSize').value;
-            if (isPixelArtMode) {
-                toggleMode(); // Reinicia o modo para atualizar a grade
-                toggleMode(); // Ativa o modo novamente
+            for (let i = 0; i < size * size; i++) {
+                const pixel = document.createElement('div');
+                pixel.className = 'pixel';
+                pixel.onclick = () => {
+                    pixel.style.backgroundColor = brushColor;
+                };
+                grid.appendChild(pixel);
             }
         }
 
