@@ -90,7 +90,12 @@
         <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
         <button id="savePaletteBtn" onclick="savePalette()">Salvar Paleta</button>
         <button id="loadPaletteBtn" onclick="loadPalette()">Carregar Paleta</button>
+        <input type="file" id="paletteImageInput" accept="image/*" onchange="loadPaletteFromImage(event)" style="display:none;">
+        <button onclick="document.getElementById('paletteImageInput').click()">Carregar Paleta por Imagem</button>
         <div id="palette"></div>
+        <button onclick="createNewFrame()">Novo Quadro</button>
+        <button onclick="playAnimation()">Reproduzir Animação</button>
+        <button id="undoBtn" onclick="undoAction()">Desfazer (Ctrl + Z)</button>
     </div>
     
     <div id="grid"></div>
@@ -99,8 +104,11 @@
         const grid = document.getElementById('grid');
         const colorPicker = document.getElementById('colorPicker');
         const toolSelector = document.getElementById('toolSelector');
+        const actionHistory = []; // Para histórico de ações
         let currentColor = '#000000';
         let currentTool = 'brush';
+        let currentFrame = 0; // Para animações
+        let frames = []; // Armazena os quadros da animação
 
         // Gera a grade de pixels
         function generateGrid() {
@@ -138,8 +146,10 @@
         function paintPixel(pixel) {
             if (currentTool === 'brush') {
                 pixel.style.backgroundColor = currentColor;
+                actionHistory.push({ action: 'paint', pixel: pixel, color: pixel.style.backgroundColor });
             } else if (currentTool === 'eraser') {
                 pixel.style.backgroundColor = 'white';
+                actionHistory.push({ action: 'erase', pixel: pixel });
             } else if (currentTool === 'bucket') {
                 fillArea(pixel);
             } else if (currentTool === 'outline') {
@@ -164,6 +174,7 @@
                 const current = queue.pop();
                 if (current.style.backgroundColor === targetColor) {
                     current.style.backgroundColor = newColor;
+                    actionHistory.push({ action: 'paint', pixel: current, color: newColor });
                     const index = Array.from(pixels).indexOf(current);
                     const neighbors = [
                         pixels[index - 1],
@@ -183,12 +194,12 @@
         // Adiciona contorno
         function addOutline(pixel) {
             pixel.style.border = `2px solid ${currentColor}`;
+            actionHistory.push({ action: 'outline', pixel: pixel, color: currentColor });
         }
 
         // Seleciona uma área
         function selectArea(pixel) {
             // Lógica de seleção de área pode ser implementada aqui
-            // Exemplo: selecione o pixel e destaque-o
             pixel.style.outline = `2px solid ${currentColor}`;
         }
 
@@ -215,42 +226,125 @@
                 ctx.fillRect(x, y, 20, 20);
             });
 
-            const link = document.createElement('a');
-            link.download = 'pixel_art.png';
-            link.href = canvas.toDataURL();
-            link.click();
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'pixel_art.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
         }
 
         function savePalette() {
-            const paletteContainer = document.getElementById('palette');
+            const color = colorPicker.value.trim();
+            const palette = document.getElementById('palette');
             const colorDiv = document.createElement('div');
             colorDiv.className = 'paletteColor';
-            colorDiv.style.backgroundColor = currentColor;
+            colorDiv.style.backgroundColor = color;
             colorDiv.addEventListener('click', () => {
-                colorPicker.value = currentColor;
-                currentColor = currentColor;
+                colorPicker.value = color;
+                currentColor = color;
             });
-            paletteContainer.appendChild(colorDiv);
+            palette.appendChild(colorDiv);
         }
 
         function loadPalette() {
-            const paletteContainer = document.getElementById('palette');
-            const savedPalette = prompt("Insira suas cores (ex: #FF0000,#00FF00,#0000FF)"); // Aceita cores separadas por vírgula
-            if (savedPalette) {
-                const colors = savedPalette.split(',');
-                paletteContainer.innerHTML = ''; // Limpa a paleta atual
-                colors.forEach(color => {
-                    const colorDiv = document.createElement('div');
-                    colorDiv.className = 'paletteColor';
-                    colorDiv.style.backgroundColor = color.trim();
-                    colorDiv.addEventListener('click', () => {
-                        colorPicker.value = color.trim();
-                        currentColor = color.trim();
-                    });
-                    paletteContainer.appendChild(colorDiv);
+            const colors = prompt("Insira as cores da paleta separadas por vírgula (ex: #FF0000,#00FF00,#0000FF):");
+            const colorArray = colors.split(',');
+            const palette = document.getElementById('palette');
+            palette.innerHTML = ''; // Limpa a paleta anterior
+            colorArray.forEach(color => {
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'paletteColor';
+                colorDiv.style.backgroundColor = color.trim();
+                colorDiv.addEventListener('click', () => {
+                    colorPicker.value = color.trim();
+                    currentColor = color.trim();
                 });
-            }
+                palette.appendChild(colorDiv);
+            });
         }
+
+        // Carrega a paleta a partir de uma imagem
+        function loadPaletteFromImage(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const imageData = ctx.getImageData(0, 0, img.width, img.height).data;
+                    const colors = new Set();
+                    for (let i = 0; i < imageData.length; i += 4) {
+                        const rgba = `rgba(${imageData[i]},${imageData[i + 1]},${imageData[i + 2]},${imageData[i + 3]})`;
+                        colors.add(rgba);
+                    }
+                    const palette = document.getElementById('palette');
+                    palette.innerHTML = ''; // Limpa a paleta anterior
+                    colors.forEach(color => {
+                        const colorDiv = document.createElement('div');
+                        colorDiv.className = 'paletteColor';
+                        colorDiv.style.backgroundColor = color;
+                        colorDiv.addEventListener('click', () => {
+                            colorPicker.value = color;
+                            currentColor = color;
+                        });
+                        palette.appendChild(colorDiv);
+                    });
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Cria um novo quadro para animação
+        function createNewFrame() {
+            const size = parseInt(document.getElementById('gridSize').value);
+            frames.push(grid.innerHTML);
+            currentFrame = frames.length - 1; // Atualiza o índice do quadro atual
+            alert('Novo quadro criado!');
+        }
+
+        // Reproduz a animação
+        function playAnimation() {
+            if (frames.length === 0) {
+                alert('Nenhum quadro criado!');
+                return;
+            }
+            let frameIndex = 0;
+            const interval = setInterval(() => {
+                grid.innerHTML = frames[frameIndex];
+                frameIndex = (frameIndex + 1) % frames.length;
+            }, 500); // Troca de quadro a cada 500 ms
+            setTimeout(() => clearInterval(interval), frames.length * 500); // Para a animação após mostrar todos os quadros
+        }
+
+        // Undo action
+        function undoAction() {
+            if (actionHistory.length === 0) return;
+            const lastAction = actionHistory.pop();
+            if (lastAction.action === 'paint') {
+                lastAction.pixel.style.backgroundColor = lastAction.color;
+            } else if (lastAction.action === 'erase') {
+                lastAction.pixel.style.backgroundColor = 'white';
+            } else if (lastAction.action === 'outline') {
+                lastAction.pixel.style.border = 'none';
+            }
+            // Adicione mais lógica se necessário
+        }
+
+        // Captura Ctrl + Z para desfazer
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'z') {
+                undoAction();
+            }
+        });
 
         // Gera a grade inicial ao carregar
         generateGrid();
