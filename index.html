@@ -12,7 +12,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             background-color: #e6e6e6;
-            overflow: hidden; /* Previne rolagem indesejada */
+            overflow: hidden;
         }
         #controls {
             display: flex;
@@ -28,7 +28,7 @@
             display: grid;
             margin: 10px 0;
             cursor: pointer;
-            touch-action: none; /* Previne rolagem ao tocar */
+            touch-action: none; 
         }
         .pixel {
             width: 20px;
@@ -44,16 +44,28 @@
         #toolSelector {
             margin: 10px 0;
         }
-        #downloadBtn {
+        #downloadBtn, #savePaletteBtn {
             margin-top: 10px;
+        }
+        #palette {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .paletteColor {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ccc;
+            margin: 2px;
+            cursor: pointer;
         }
         /* Ajustes responsivos */
         @media (max-width: 600px) {
             #grid {
-                grid-template-columns: repeat(8, 1fr); /* Menos colunas em telas pequenas */
+                grid-template-columns: repeat(8, 1fr);
             }
             .pixel {
-                width: 25px; /* Tamanho maior para toque fácil */
+                width: 25px; 
                 height: 25px;
             }
         }
@@ -71,8 +83,13 @@
         <select id="toolSelector">
             <option value="brush">Pincel</option>
             <option value="eraser">Borracha</option>
+            <option value="bucket">Balde de Tinta</option>
+            <option value="outline">Contorno</option>
+            <option value="selection">Seleção</option>
         </select>
         <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
+        <button id="savePaletteBtn" onclick="savePalette()">Salvar Paleta</button>
+        <div id="palette"></div>
     </div>
     
     <div id="grid"></div>
@@ -97,25 +114,24 @@
                 pixel.className = 'pixel';
                 pixel.style.backgroundColor = 'white';
                 pixel.addEventListener('mousedown', () => paintPixel(pixel));
-                pixel.addEventListener('touchstart', () => paintPixel(pixel), { passive: true }); // Para dispositivos móveis
+                pixel.addEventListener('touchstart', () => paintPixel(pixel), { passive: true });
                 pixel.addEventListener('mouseover', () => {
                     if (mouseDown) paintPixel(pixel);
                 });
                 pixel.addEventListener('touchmove', (e) => {
-                    e.preventDefault(); // Previne rolagem na tela
+                    e.preventDefault(); 
                     if (mouseDown) paintPixel(pixel);
                 });
                 grid.appendChild(pixel);
             }
         }
 
-        // Variável para detectar se o mouse está pressionado
         let mouseDown = false;
 
         // Eventos de mouse
         window.addEventListener('mousedown', () => { mouseDown = true; });
         window.addEventListener('mouseup', () => { mouseDown = false; });
-        window.addEventListener('touchend', () => { mouseDown = false; }); // Para dispositivos móveis
+        window.addEventListener('touchend', () => { mouseDown = false; });
 
         // Pintar o pixel
         function paintPixel(pixel) {
@@ -123,44 +139,99 @@
                 pixel.style.backgroundColor = currentColor;
             } else if (currentTool === 'eraser') {
                 pixel.style.backgroundColor = 'white';
+            } else if (currentTool === 'bucket') {
+                fillArea(pixel);
+            } else if (currentTool === 'outline') {
+                addOutline(pixel);
+            } else if (currentTool === 'selection') {
+                selectArea(pixel);
             }
         }
 
-        // Atualiza a cor selecionada
+        // Preencher área com a cor selecionada
+        function fillArea(pixel) {
+            const targetColor = pixel.style.backgroundColor;
+            const newColor = currentColor;
+
+            if (targetColor === newColor) return;
+
+            const pixels = document.querySelectorAll('.pixel');
+            const size = Math.sqrt(pixels.length);
+            const queue = [pixel];
+
+            while (queue.length > 0) {
+                const current = queue.pop();
+                if (current.style.backgroundColor === targetColor) {
+                    current.style.backgroundColor = newColor;
+                    const index = Array.from(pixels).indexOf(current);
+                    const neighbors = [
+                        pixels[index - 1],
+                        pixels[index + 1],
+                        pixels[index - size],
+                        pixels[index + size]
+                    ];
+                    neighbors.forEach(neighbor => {
+                        if (neighbor && neighbor.style.backgroundColor === targetColor) {
+                            queue.push(neighbor);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Adiciona contorno
+        function addOutline(pixel) {
+            pixel.style.border = `2px solid ${currentColor}`;
+        }
+
+        // Seleciona uma área
+        function selectArea(pixel) {
+            // Lógica de seleção de área pode ser implementada aqui
+            // Exemplo: selecione o pixel e destaque-o
+            pixel.style.outline = `2px solid ${currentColor}`;
+        }
+
         colorPicker.addEventListener('input', (e) => {
             currentColor = e.target.value;
         });
 
-        // Atualiza a ferramenta selecionada
         toolSelector.addEventListener('change', (e) => {
             currentTool = e.target.value;
         });
 
-        // Baixa a imagem da arte em pixel
         function downloadImage() {
             const size = parseInt(document.getElementById('gridSize').value);
             const canvas = document.createElement('canvas');
-            canvas.width = size * 20; // 20px por pixel
-            canvas.height = size * 20; // 20px por pixel
+            canvas.width = size * 20;
+            canvas.height = size * 20;
             const ctx = canvas.getContext('2d');
 
-            // Desenha cada pixel no canvas
             const pixels = document.querySelectorAll('.pixel');
             pixels.forEach((pixel, index) => {
                 const x = (index % size) * 20;
                 const y = Math.floor(index / size) * 20;
-                ctx.fillStyle = pixel.style.backgroundColor;
+                ctx.fillStyle = pixel.style.backgroundColor === 'white' ? 'rgba(255, 255, 255, 0)' : pixel.style.backgroundColor;
                 ctx.fillRect(x, y, 20, 20);
             });
 
-            // Converte o canvas para imagem e inicia o download
             const link = document.createElement('a');
             link.download = 'pixel_art.png';
             link.href = canvas.toDataURL();
             link.click();
         }
 
-        // Gera a grade na inicialização
+        function savePalette() {
+            const paletteContainer = document.getElementById('palette');
+            const colorDiv = document.createElement('div');
+            colorDiv.className = 'paletteColor';
+            colorDiv.style.backgroundColor = currentColor;
+            colorDiv.addEventListener('click', () => {
+                colorPicker.value = currentColor;
+                currentColor = currentColor;
+            });
+            paletteContainer.appendChild(colorDiv);
+        }
+
         generateGrid();
     </script>
 </body>
