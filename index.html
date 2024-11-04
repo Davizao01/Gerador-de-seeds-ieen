@@ -8,23 +8,33 @@
         body {
             font-family: Arial, sans-serif;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #e8e8e8;
         }
-        #canvasContainer {
-            position: relative;
+        h1 {
+            color: #333;
+            position: absolute;
+            top: 20px;
+        }
+        #container {
             display: flex;
-            align-items: center;
-            justify-content: center;
+        }
+        #tools {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+            background-color: #f9f9f9;
         }
         #pixelCanvas {
             border: 1px solid #ccc;
             cursor: crosshair;
             image-rendering: pixelated;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         #palette {
             display: flex;
@@ -37,36 +47,28 @@
             border: 1px solid #999;
             margin: 1px;
             cursor: pointer;
+            transition: transform 0.2s;
         }
-        #controls {
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        .colorBox:hover {
+            transform: scale(1.1);
+            border: 1px solid #333;
         }
         button {
-            padding: 10px;
+            padding: 10px 15px;
             margin: 5px;
             border: none;
             background-color: #007BFF;
             color: white;
             cursor: pointer;
             border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
         }
         button:hover {
             background-color: #0056b3;
-        }
-        #zoomControls {
-            margin: 10px 0;
-        }
-        input[type="file"] {
-            margin: 5px;
+            transform: scale(1.05);
         }
         #gridSize {
             margin: 5px;
-        }
-        #paletteOptions {
-            margin: 10px;
         }
     </style>
 </head>
@@ -74,23 +76,17 @@
 
 <h1>Pixel Art Creator</h1>
 
-<div id="canvasContainer">
-    <canvas id="pixelCanvas" width="480" height="480"></canvas>
-</div>
-<div id="controls">
-    <div id="palette"></div>
-    <button id="clearCanvas">Limpar</button>
-    <button id="saveImage">Salvar Imagem</button>
-    <input type="file" id="loadPalette" accept="image/*">
-    <input type="range" id="gridSize" min="1" max="100" value="16"> Tamanho da Grade
-    <div id="paletteOptions">
-        <button id="randomPalette">Paleta Aleatória</button>
+<div id="container">
+    <div id="tools">
+        <div id="palette"></div>
+        <button id="clearCanvas">Limpar</button>
+        <button id="saveImage">Salvar Imagem</button>
+        <input type="file" id="loadPalette" accept="image/*" style="margin: 5px;">
         <button id="loadPaletteButton">Carregar Paleta</button>
+        <label for="gridSize">Tamanho da Grade:</label>
+        <input type="range" id="gridSize" min="1" max="100" value="16" style="width: 200px;">
     </div>
-    <div id="zoomControls">
-        <button id="zoomIn">Zoom In</button>
-        <button id="zoomOut">Zoom Out</button>
-    </div>
+    <canvas id="pixelCanvas" width="480" height="480"></canvas>
 </div>
 
 <script>
@@ -98,12 +94,9 @@
     const ctx = canvas.getContext("2d");
     const paletteDiv = document.getElementById("palette");
     const gridSizeInput = document.getElementById("gridSize");
-    const zoomInButton = document.getElementById("zoomIn");
-    const zoomOutButton = document.getElementById("zoomOut");
 
     let currentColor = "#000000";
     let gridSize = 16;
-    let zoomLevel = 1;
 
     function drawGrid() {
         const size = canvas.width / gridSize;
@@ -172,20 +165,6 @@
         drawGrid();
     };
 
-    zoomInButton.onclick = () => {
-        zoomLevel += 0.1;
-        canvas.style.transform = `scale(${zoomLevel})`;
-        canvas.style.transformOrigin = "top left";
-    };
-
-    zoomOutButton.onclick = () => {
-        if (zoomLevel > 0.1) {
-            zoomLevel -= 0.1;
-            canvas.style.transform = `scale(${zoomLevel})`;
-            canvas.style.transformOrigin = "top left";
-        }
-    };
-
     document.getElementById("loadPalette").onchange = (e) => {
         const file = e.target.files[0];
         const reader = new FileReader();
@@ -201,7 +180,7 @@
         reader.readAsDataURL(file);
     };
 
-    document.getElementById("randomPalette").onclick = createPalette;
+    document.getElementById("loadPaletteButton").onclick = createPalette;
 
     createPalette();
     drawGrid();
