@@ -118,10 +118,16 @@
                 <div id="frameList"></div>
             </div>
             <div id="palette"></div> <!-- Div para exibir paleta -->
+            <h3>Ferramentas</h3>
+            <button onclick="setTool('pencil')">Lápis</button>
+            <button onclick="setTool('eraser')">Borracha</button>
+            <button onclick="setTool('bucket')">Balde de Tinta</button>
+            <button onclick="downloadImage()">Baixar Imagem</button> <!-- Botão para baixar a imagem -->
         </div>
         <div id="grid"></div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
     <script>
         const gridSize = 16;
         const grid = document.getElementById('grid');
@@ -131,6 +137,7 @@
         let frames = [];
         let currentFrame = 0;
         let palette = []; // Array para armazenar as cores da paleta
+        let currentTool = 'pencil'; // Ferramenta atual
 
         // Cria a grade de pixels
         function generateGrid() {
@@ -139,9 +146,9 @@
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
-                pixel.addEventListener('mousedown', () => paintPixel(pixel));
+                pixel.addEventListener('mousedown', () => useTool(pixel));
                 pixel.addEventListener('mouseover', () => {
-                    if (mouseDown) paintPixel(pixel);
+                    if (mouseDown) useTool(pixel);
                 });
                 grid.appendChild(pixel);
             }
@@ -151,12 +158,42 @@
         window.addEventListener('mousedown', () => { mouseDown = true; });
         window.addEventListener('mouseup', () => { mouseDown = false; });
 
+        function useTool(pixel) {
+            if (currentTool === 'pencil') {
+                paintPixel(pixel);
+            } else if (currentTool === 'eraser') {
+                erasePixel(pixel);
+            } else if (currentTool === 'bucket') {
+                fillBucket(pixel);
+            }
+        }
+
         function paintPixel(pixel) {
             const previousColor = pixel.style.backgroundColor;
             if (previousColor !== currentColor) {
                 history.push({ pixel, previousColor });
             }
             pixel.style.backgroundColor = currentColor;
+        }
+
+        function erasePixel(pixel) {
+            const previousColor = pixel.style.backgroundColor;
+            if (previousColor !== 'white') {
+                history.push({ pixel, previousColor });
+            }
+            pixel.style.backgroundColor = 'white';
+        }
+
+        function fillBucket(pixel) {
+            const targetColor = pixel.style.backgroundColor;
+            if (targetColor === currentColor) return;
+
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach(p => {
+                if (p.style.backgroundColor === targetColor) {
+                    p.style.backgroundColor = currentColor;
+                }
+            });
         }
 
         function undo() {
@@ -241,7 +278,27 @@
             currentColor = colorPicker.value;
         }
 
-        generateGrid();
+        function setTool(tool) {
+            currentTool = tool; // Atualiza a ferramenta atual
+        }
+
+        function clearGrid() {
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach(pixel => {
+                pixel.style.backgroundColor = 'white';
+            });
+        }
+
+        function downloadImage() {
+            html2canvas(grid).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'pixel-art.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        generateGrid(); // Inicializa a grade
     </script>
 </body>
 </html>
