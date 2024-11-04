@@ -105,7 +105,7 @@
     <div id="app-container">
         <div id="toolbox">
             <h2>Ferramentas</h2>
-            <input type="color" id="colorPicker" value="#000000">
+            <input type="color" id="colorPicker" value="#000000" onchange="updateCurrentColor()">
             <button onclick="savePalette()">Salvar Cor</button>
             <button onclick="loadPalette()">Carregar Paleta</button>
             <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
@@ -235,6 +235,10 @@
                 };
                 paletteDiv.appendChild(colorBox);
             });
+        }
+
+        function updateCurrentColor() {
+            currentColor = colorPicker.value;
         }
 
         generateGrid();
