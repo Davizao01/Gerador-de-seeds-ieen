@@ -20,6 +20,7 @@
             justify-content: center;
             align-items: flex-start;
             flex-wrap: wrap; /* Permite que os itens se movam para a próxima linha em telas pequenas */
+            max-width: 90%; /* Define uma largura máxima para o container */
         }
         #grid {
             display: grid;
@@ -27,11 +28,13 @@
             margin: 20px;
             background-color: #ccc;
             cursor: crosshair;
+            grid-template-columns: repeat(16, 30px); /* Aumenta o tamanho dos pixels */
         }
         .pixel {
             background-color: white;
             border: 1px solid #ddd;
-            aspect-ratio: 1; /* Mantém a proporção quadrada */
+            width: 30px; /* Define largura fixa */
+            height: 30px; /* Define altura fixa */
         }
         .toolbox {
             display: flex;
@@ -41,6 +44,8 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             margin-right: 20px;
             min-width: 200px; /* Define uma largura mínima */
+            max-height: 90vh; /* Limita a altura da toolbox */
+            overflow-y: auto; /* Permite rolagem se necessário */
         }
         .paletteColor {
             width: 30px;
@@ -96,8 +101,8 @@
                 width: 100%; /* Animação ocupa toda a largura */
             }
             .pixel {
-                width: 15vw; /* Adapta o tamanho dos pixels ao viewport */
-                height: 15vw; /* Mantém a proporção quadrada */
+                width: 20px; /* Adapta o tamanho dos pixels ao viewport em telas pequenas */
+                height: 20px; /* Mantém a proporção quadrada */
             }
         }
     </style>
@@ -140,7 +145,7 @@
 
         // Gera a grade de pixels
         function generateGrid() {
-            grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 30px)`; // Define largura fixa
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
@@ -233,63 +238,4 @@
         }
 
         function selectLayer(index) {
-            currentLayer = index;
-            loadLayer(currentLayer);
-        }
-
-        function loadLayer(index) {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach((pixel, i) => {
-                pixel.style.backgroundColor = layers[index][i];
-            });
-        }
-
-        function savePalette() {
-            const color = colorPicker.value;
-            const palette = document.createElement('div');
-            palette.className = 'paletteColor';
-            palette.style.backgroundColor = color;
-            palette.onclick = () => {
-                colorPicker.value = color;
-                currentColor = color;
-            };
-            document.body.appendChild(palette);
-        }
-
-        function loadPalette() {
-            const palette = document.querySelectorAll('.paletteColor');
-            palette.forEach(colorDiv => {
-                const color = colorDiv.style.backgroundColor;
-                colorDiv.onclick = () => {
-                    colorPicker.value = color;
-                    currentColor = color;
-                };
-            });
-        }
-
-        function loadPaletteFromImage(event) {
-            const file = event.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    // Aqui você pode processar a imagem e extrair cores
-                    console.log('Imagem carregada:', img);
-                }
-                img.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function clearGrid() {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach(pixel => {
-                pixel.style.backgroundColor = 'white';
-            });
-            layers[currentLayer].fill('white'); // Limpa a camada atual
-        }
-
-        generateGrid();
-    </script>
-</body>
-</html>
+           
