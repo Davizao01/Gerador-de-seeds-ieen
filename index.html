@@ -10,65 +10,57 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            background-color: #f5f5f5;
+            background-color: #f0f0f0;
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
 
         #app-container {
             display: flex;
             flex-direction: row;
-            margin-top: 20px;
+            margin-top: 10px;
             width: 90vw;
             max-width: 1200px;
         }
 
-        /* Caixa de ferramentas */
+        /* Toolbox - esquerda */
         #toolbox {
             display: flex;
             flex-direction: column;
-            background-color: #ffffff;
+            background-color: #fff;
             padding: 20px;
-            border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             max-width: 250px;
             margin-right: 20px;
+            overflow-y: auto;
         }
 
-        /* Grade de pixels */
+        /* Grid - centro */
         #grid {
             display: grid;
             gap: 1px;
             background-color: #ccc;
             cursor: crosshair;
             grid-template-columns: repeat(16, 30px);
-            border: 1px solid #ddd;
         }
 
         .pixel {
             background-color: white;
             width: 30px;
             height: 30px;
-            transition: background-color 0.2s; /* Adicionando transição */
         }
 
-        /* Botão de download */
-        #downloadBtn {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-            border: none;
+        /* Paleta de Cores */
+        .paletteColor {
+            width: 30px;
+            height: 30px;
+            margin: 2px;
             cursor: pointer;
-            border-radius: 4px;
-            font-size: 16px;
+            border: 1px solid #000;
+            display: inline-block;
         }
 
-        #downloadBtn:hover {
-            background-color: #45a049;
-        }
-
-        /* Animação */
+        /* Animações */
         #animationContainer {
             margin-top: 20px;
             display: flex;
@@ -94,12 +86,13 @@
             border: 2px solid blue;
         }
 
-        /* Responsivo */
+        /* Ajustes para mobile */
         @media (max-width: 600px) {
             #app-container {
                 flex-direction: column;
                 align-items: center;
             }
+            
             #toolbox {
                 max-width: 100%;
                 margin: 0 0 10px 0;
@@ -115,14 +108,13 @@
             <input type="color" id="colorPicker" value="#000000">
             <button onclick="savePalette()">Salvar Cor</button>
             <button onclick="loadPalette()">Carregar Paleta</button>
+            <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
             <button onclick="clearGrid()">Limpar Grade</button>
             <button onclick="undo()">Desfazer (Ctrl + Z)</button>
-            <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
             <div id="animationContainer">
                 <h2>Animação</h2>
                 <button onclick="addFrame()">Adicionar Quadro</button>
                 <button onclick="playAnimation()">Reproduzir</button>
-                <button onclick="stopAnimation()">Parar</button>
                 <div id="frameList"></div>
             </div>
         </div>
@@ -137,11 +129,10 @@
         let history = [];
         let frames = [];
         let currentFrame = 0;
-        let interval; // Para controlar a animação
 
         // Cria a grade de pixels
         function generateGrid() {
-            grid.innerHTML = '';
+            grid.innerHTML = ''; // Limpa grade
             grid.style.gridTemplateColumns = `repeat(${gridSize}, 30px)`;
             for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
@@ -174,10 +165,10 @@
         }
 
         function addFrame() {
-            frames.push(Array.from(document.querySelectorAll('.pixel')).map(pixel => pixel.style.backgroundColor));
             const frame = document.createElement('div');
             frame.className = 'frame';
-            frame.onclick = () => selectFrame(frames.length - 1);
+            frame.onclick = () => selectFrame(frames.length);
+            frames.push([]);
             document.getElementById('frameList').appendChild(frame);
             updateFrameList();
         }
@@ -198,15 +189,11 @@
 
         function playAnimation() {
             let frameIndex = 0;
-            interval = setInterval(() => {
+            const interval = setInterval(() => {
                 loadFrame(frameIndex);
                 frameIndex++;
                 if (frameIndex >= frames.length) frameIndex = 0;
             }, 500);
-        }
-
-        function stopAnimation() {
-            clearInterval(interval);
         }
 
         function updateFrameList() {
@@ -217,31 +204,6 @@
                 if (index === currentFrame) frameDiv.classList.add('selected');
             });
         }
-
-        function downloadImage() {
-            const canvas = document.createElement('canvas');
-            const size = gridSize * 30; 
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach((pixel, i) => {
-                const row = Math.floor(i / gridSize);
-                const col = i % gridSize;
-                ctx.fillStyle = pixel.style.backgroundColor || 'white';
-                ctx.fillRect(col * 30, row * 30, 30, 30);
-            });
-
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            link.download = 'pixel_art.png';
-            link.click();
-        }
-
-        colorPicker.addEventListener('input', (e) => {
-            currentColor = e.target.value;
-        });
 
         generateGrid();
     </script>
