@@ -42,6 +42,7 @@
             background-color: #ccc;
             cursor: crosshair;
             grid-template-columns: repeat(16, 30px);
+            margin-right: 20px;
         }
 
         .pixel {
@@ -51,6 +52,12 @@
         }
 
         /* Paleta de Cores */
+        #palette {
+            display: flex;
+            flex-direction: column;
+            margin-top: 10px;
+        }
+
         .paletteColor {
             width: 30px;
             height: 30px;
@@ -106,9 +113,6 @@
         <div id="toolbox">
             <h2>Ferramentas</h2>
             <input type="color" id="colorPicker" value="#000000" onchange="updateCurrentColor()">
-            <button onclick="savePalette()">Salvar Cor</button>
-            <button onclick="loadPalette()">Carregar Paleta</button>
-            <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
             <button onclick="clearGrid()">Limpar Grade</button>
             <button onclick="undo()">Desfazer (Ctrl + Z)</button>
             <div id="animationContainer">
@@ -117,12 +121,13 @@
                 <button onclick="playAnimation()">Reproduzir</button>
                 <div id="frameList"></div>
             </div>
-            <div id="palette"></div> <!-- Div para exibir paleta -->
             <h3>Ferramentas</h3>
             <button onclick="setTool('pencil')">Lápis</button>
             <button onclick="setTool('eraser')">Borracha</button>
             <button onclick="setTool('bucket')">Balde de Tinta</button>
             <button onclick="downloadImage()">Baixar Imagem</button> <!-- Botão para baixar a imagem -->
+            <h2>Paleta de Cores</h2>
+            <div id="palette"></div> <!-- Div para exibir paleta -->
         </div>
         <div id="grid"></div>
     </div>
@@ -136,7 +141,7 @@
         let history = [];
         let frames = [];
         let currentFrame = 0;
-        let palette = []; // Array para armazenar as cores da paleta
+        let palette = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF']; // Paleta de cores padrão
         let currentTool = 'pencil'; // Ferramenta atual
 
         // Cria a grade de pixels
@@ -152,6 +157,7 @@
                 });
                 grid.appendChild(pixel);
             }
+            updatePaletteDisplay(); // Atualiza a exibição da paleta de cores
         }
 
         let mouseDown = false;
@@ -241,21 +247,6 @@
             framesDivs.forEach((frameDiv, index) => {
                 frameDiv.classList.remove('selected');
                 if (index === currentFrame) frameDiv.classList.add('selected');
-            });
-        }
-
-        function savePalette() {
-            const color = colorPicker.value;
-            if (!palette.includes(color)) {
-                palette.push(color);
-                updatePaletteDisplay();
-            }
-        }
-
-        function loadPalette() {
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach((pixel, index) => {
-                pixel.style.backgroundColor = palette[index] || 'white';
             });
         }
 
