@@ -1,118 +1,230 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editor de Pixel Art</title>
-  <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background-color: #333;
-      color: #fff;
-    }
-    #canvasContainer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-      border: 1px solid #444;
-      background-color: #222;
-      padding: 10px;
-      position: relative;
-    }
-    #canvas {
-      image-rendering: pixelated;
-      background-color: transparent;
-      cursor: crosshair;
-    }
-    #gridControls {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-      align-items: center;
-    }
-    label {
-      color: #ddd;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #555;
-      border: none;
-      color: #fff;
-      border-radius: 5px;
-    }
-    button:hover {
-      background-color: #666;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Art Creator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #e8e8e8;
+        }
+        h1 {
+            color: #333;
+        }
+        #canvasContainer {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        #pixelCanvas {
+            border: 1px solid #ccc;
+            cursor: crosshair;
+            image-rendering: pixelated;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #palette {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .colorBox {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #999;
+            margin: 1px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .colorBox:hover {
+            transform: scale(1.1);
+            border: 1px solid #333;
+        }
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        #zoomControls {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        #gridSize {
+            margin: 5px;
+        }
+        #paletteOptions {
+            margin: 10px;
+        }
+        .buttonGroup {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
 
-  <h1>Editor de Pixel Art</h1>
+<h1>Pixel Art Creator</h1>
 
-  <div id="canvasContainer">
-    <canvas id="canvas" width="256" height="256"></canvas>
-    <div id="gridControls">
-      <label for="pixelSize">Tamanho do Pixel:</label>
-      <input type="number" id="pixelSize" value="16" min="1" max="64">
-      <label for="gridSpacing">Espaçamento da Grid:</label>
-      <input type="number" id="gridSpacing" value="0" min="0" max="10">
-      <button onclick="clearCanvas()">Limpar</button>
+<div id="canvasContainer">
+    <canvas id="pixelCanvas" width="480" height="480"></canvas>
+</div>
+<div id="controls">
+    <div id="palette"></div>
+    <div class="buttonGroup">
+        <button id="clearCanvas">Limpar</button>
+        <button id="saveImage">Salvar Imagem</button>
     </div>
-  </div>
+    <input type="file" id="loadPalette" accept="image/*" style="margin: 5px;">
+    <div id="paletteOptions">
+        <button id="randomPalette">Paleta Aleatória</button>
+        <button id="loadPaletteButton">Carregar Paleta</button>
+    </div>
+    <label for="gridSize">Tamanho da Grade:</label>
+    <input type="range" id="gridSize" min="1" max="100" value="16" style="width: 200px;">
+    <div id="zoomControls">
+        <button id="zoomIn">Zoom In</button>
+        <button id="zoomOut">Zoom Out</button>
+    </div>
+</div>
 
-  <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const pixelSizeInput = document.getElementById('pixelSize');
-    const gridSpacingInput = document.getElementById('gridSpacing');
-    let pixelSize = parseInt(pixelSizeInput.value);
-    let gridSpacing = parseInt(gridSpacingInput.value);
-    
-    // Desenhar a grid com configurações ajustáveis
+<script>
+    const canvas = document.getElementById("pixelCanvas");
+    const ctx = canvas.getContext("2d");
+    const paletteDiv = document.getElementById("palette");
+    const gridSizeInput = document.getElementById("gridSize");
+    const zoomInButton = document.getElementById("zoomIn");
+    const zoomOutButton = document.getElementById("zoomOut");
+
+    let currentColor = "#000000";
+    let gridSize = 16;
+    let zoomLevel = 1;
+
     function drawGrid() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.beginPath();
-      for (let x = 0; x < canvas.width; x += pixelSize + gridSpacing) {
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-      }
-      for (let y = 0; y < canvas.height; y += pixelSize + gridSpacing) {
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-      }
-      ctx.strokeStyle = '#555';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    
-    // Atualizar a grid e o pixel size ao alterar o valor nos inputs
-    pixelSizeInput.addEventListener('input', () => {
-      pixelSize = parseInt(pixelSizeInput.value);
-      drawGrid();
-    });
-
-    gridSpacingInput.addEventListener('input', () => {
-      gridSpacing = parseInt(gridSpacingInput.value);
-      drawGrid();
-    });
-    
-    // Limpar o canvas
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawGrid();
+        const size = canvas.width / gridSize;
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa o canvas antes de desenhar a grade
+        for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+                ctx.strokeStyle = "#dddddd";
+                ctx.strokeRect(i * size, j * size, size, size);
+            }
+        }
     }
 
-    // Iniciar o desenho da grid ao carregar
+    function fillPixel(x, y) {
+        const size = canvas.width / gridSize;
+        ctx.fillStyle = currentColor;
+        ctx.fillRect(Math.floor(x / size) * size, Math.floor(y / size) * size, size, size);
+    }
+
+    canvas.addEventListener("mousedown", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        fillPixel(x, y);
+        canvas.addEventListener("mousemove", onPaint);
+    });
+
+    canvas.addEventListener("mouseup", () => {
+        canvas.removeEventListener("mousemove", onPaint);
+    });
+
+    function onPaint(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        fillPixel(x, y);
+    }
+
+    function createPalette() {
+        paletteDiv.innerHTML = ''; // Limpa a paleta antes de recriá-la
+        for (let i = 0; i < 8; i++) {
+            const color = "#" + Math.floor(Math.random() * 16777215).toString(16);
+            const colorBox = document.createElement("div");
+            colorBox.className = "colorBox";
+            colorBox.style.backgroundColor = color;
+            colorBox.onclick = () => {
+                currentColor = color;
+            };
+            paletteDiv.appendChild(colorBox);
+        }
+    }
+
+    document.getElementById("clearCanvas").onclick = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGrid();
+    };
+
+    document.getElementById("saveImage").onclick = () => {
+        const link = document.createElement('a');
+        link.download = 'pixel_art.png';
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    };
+
+    gridSizeInput.oninput = (e) => {
+        gridSize = e.target.value;
+        drawGrid();
+    };
+
+    zoomInButton.onclick = () => {
+        zoomLevel += 0.1;
+        canvas.style.transform = `scale(${zoomLevel})`;
+        canvas.style.transformOrigin = "top left";
+    };
+
+    zoomOutButton.onclick = () => {
+        if (zoomLevel > 0.1) {
+            zoomLevel -= 0.1;
+            canvas.style.transform = `scale(${zoomLevel})`;
+            canvas.style.transformOrigin = "top left";
+        }
+    };
+
+    document.getElementById("loadPalette").onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0, gridSize, gridSize);
+                createPalette();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    document.getElementById("randomPalette").onclick = createPalette;
+
+    createPalette();
     drawGrid();
-  </script>
+</script>
 
 </body>
 </html>
