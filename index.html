@@ -50,6 +50,14 @@
         h2 {
             margin: 0 0 10px 0;
         }
+        #animationContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        #animationControls {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -62,8 +70,15 @@
             <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
             <button onclick="clearGrid()">Limpar Grade</button>
             <button onclick="undo()">Desfazer</button>
+            <h2>Animação</h2>
+            <button onclick="addFrame()">Adicionar Quadro</button>
+            <button onclick="playAnimation()">Reproduzir Animação</button>
         </div>
         <div id="grid"></div>
+    </div>
+    <div id="animationContainer">
+        <h2>Quadros de Animação</h2>
+        <div id="frames"></div>
     </div>
 
     <script>
@@ -72,6 +87,8 @@
         const colorPicker = document.getElementById('colorPicker');
         let currentColor = colorPicker.value;
         let history = [];
+        let frames = [];
+        let currentFrame = 0;
 
         // Gera a grade de pixels
         function generateGrid() {
@@ -108,6 +125,50 @@
             if (history.length > 0) {
                 const lastAction = history.pop();
                 lastAction.pixel.style.backgroundColor = lastAction.previousColor;
+            }
+        }
+
+        function addFrame() {
+            const frame = document.createElement('div');
+            frame.className = 'pixel';
+            frame.style.width = '20px';
+            frame.style.height = '20px';
+            frame.style.backgroundColor = 'white';
+            frame.onclick = () => selectFrame(frames.length);
+            frames.push(frame);
+            document.getElementById('frames').appendChild(frame);
+            updateCurrentFrame();
+        }
+
+        function selectFrame(index) {
+            currentFrame = index;
+            updateCurrentFrame();
+            loadFrame(currentFrame);
+        }
+
+        function loadFrame(index) {
+            const pixels = document.querySelectorAll('.pixel');
+            const frameData = frames[index] || [];
+            pixels.forEach((pixel, i) => {
+                pixel.style.backgroundColor = frameData[i] || 'white';
+            });
+        }
+
+        function playAnimation() {
+            let frameIndex = 0;
+            const interval = setInterval(() => {
+                loadFrame(frameIndex);
+                frameIndex++;
+                if (frameIndex >= frames.length) {
+                    frameIndex = 0; // Volta ao primeiro quadro
+                }
+            }, 500); // Altere o tempo de reprodução conforme necessário
+        }
+
+        function updateCurrentFrame() {
+            const frame = frames[currentFrame];
+            if (frame) {
+                frame.style.border = '2px solid blue';
             }
         }
 
