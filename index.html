@@ -59,6 +59,9 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        #downloadBtn {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -70,6 +73,9 @@
         <div id="colorPalette"></div>
         <input type="color" id="colorPicker" value="#000000" onchange="changeColor(this.value)">
         <div id="colorInfo">Cor selecionada: <span id="selectedColor">#000000</span></div>
+        <label for="hsbInput">Escolha a cor HSB:</label>
+        <input type="color" id="hsbInput" value="#000000" onchange="changeColor(this.value)">
+        <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
     </div>
     <div id="grid"></div>
 
@@ -120,18 +126,46 @@
             grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
             grid.style.gridTemplateRows = `repeat(${size}, 1fr)`;
 
+            // Gera pixels e restaura cores salvas
             for (let i = 0; i < size * size; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
+                pixel.style.backgroundColor = localStorage.getItem(`pixel${i}`) || 'white'; // Restaura a cor se existir
                 pixel.onclick = () => {
                     pixel.style.backgroundColor = brushColor;
+                    localStorage.setItem(`pixel${i}`, brushColor); // Salva a cor ao clicar
                 };
                 grid.appendChild(pixel);
             }
         }
 
+        // Baixa a imagem da arte em pixel
+        function downloadImage() {
+            const size = parseInt(sizeInput.value);
+            const canvas = document.createElement('canvas');
+            canvas.width = size * 20; // 20px por pixel
+            canvas.height = size * 20; // 20px por pixel
+            const ctx = canvas.getContext('2d');
+
+            // Desenha cada pixel no canvas
+            const pixels = document.querySelectorAll('.pixel');
+            pixels.forEach((pixel, index) => {
+                const x = (index % size) * 20;
+                const y = Math.floor(index / size) * 20;
+                ctx.fillStyle = pixel.style.backgroundColor;
+                ctx.fillRect(x, y, 20, 20);
+            });
+
+            // Converte o canvas para imagem e inicia o download
+            const link = document.createElement('a');
+            link.download = 'pixel_art.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
         // Inicializa a paleta de cores
         updateColorPalette();
+        generateGrid(); // Gera a grade na inicialização
     </script>
 </body>
 </html>
