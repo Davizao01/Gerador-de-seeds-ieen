@@ -19,6 +19,7 @@
             position: relative;
             display: flex;
             align-items: center;
+            justify-content: center;
         }
         #pixelCanvas {
             border: 1px solid #ccc;
@@ -39,6 +40,9 @@
         }
         #controls {
             margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         button {
             padding: 10px;
@@ -61,6 +65,9 @@
         #gridSize {
             margin: 5px;
         }
+        #paletteOptions {
+            margin: 10px;
+        }
     </style>
 </head>
 <body>
@@ -73,8 +80,13 @@
 <div id="controls">
     <div id="palette"></div>
     <button id="clearCanvas">Limpar</button>
+    <button id="saveImage">Salvar Imagem</button>
     <input type="file" id="loadPalette" accept="image/*">
     <input type="range" id="gridSize" min="1" max="100" value="16"> Tamanho da Grade
+    <div id="paletteOptions">
+        <button id="randomPalette">Paleta Aleatória</button>
+        <button id="loadPaletteButton">Carregar Paleta</button>
+    </div>
     <div id="zoomControls">
         <button id="zoomIn">Zoom In</button>
         <button id="zoomOut">Zoom Out</button>
@@ -95,6 +107,7 @@
 
     function drawGrid() {
         const size = canvas.width / gridSize;
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpa o canvas antes de desenhar a grade
         for (let i = 0; i < gridSize; i++) {
             for (let j = 0; j < gridSize; j++) {
                 ctx.strokeStyle = "#dddddd";
@@ -109,14 +122,27 @@
         ctx.fillRect(Math.floor(x / size) * size, Math.floor(y / size) * size, size, size);
     }
 
-    canvas.addEventListener("click", (e) => {
+    canvas.addEventListener("mousedown", (e) => {
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         fillPixel(x, y);
+        canvas.addEventListener("mousemove", onPaint);
     });
 
+    canvas.addEventListener("mouseup", () => {
+        canvas.removeEventListener("mousemove", onPaint);
+    });
+
+    function onPaint(e) {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        fillPixel(x, y);
+    }
+
     function createPalette() {
+        paletteDiv.innerHTML = ''; // Limpa a paleta antes de recriá-la
         for (let i = 0; i < 8; i++) {
             const color = "#" + Math.floor(Math.random() * 16777215).toString(16);
             const colorBox = document.createElement("div");
@@ -132,6 +158,13 @@
     document.getElementById("clearCanvas").onclick = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGrid();
+    };
+
+    document.getElementById("saveImage").onclick = () => {
+        const link = document.createElement('a');
+        link.download = 'pixel_art.png';
+        link.href = canvas.toDataURL("image/png");
+        link.click();
     };
 
     gridSizeInput.oninput = (e) => {
@@ -159,6 +192,7 @@
         reader.onload = function(event) {
             const img = new Image();
             img.onload = function() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0, gridSize, gridSize);
                 createPalette();
             };
@@ -166,6 +200,8 @@
         };
         reader.readAsDataURL(file);
     };
+
+    document.getElementById("randomPalette").onclick = createPalette;
 
     createPalette();
     drawGrid();
