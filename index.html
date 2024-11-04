@@ -10,8 +10,9 @@
             flex-direction: column;
             align-items: center;
             margin: 0;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
+            background-color: #2D2D2D; /* Fundo escuro como Aseprite */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FFFFFF; /* Cor do texto */
             overflow: hidden;
         }
 
@@ -27,19 +28,19 @@
         #toolbox {
             display: flex;
             flex-direction: column;
-            background-color: #fff;
+            background-color: #3C3C3C; /* Fundo das ferramentas */
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             max-width: 250px;
             margin-right: 20px;
-            overflow-y: auto;
+            border-radius: 5px; /* Bordas arredondadas */
         }
 
         /* Grid - centro */
         #grid {
             display: grid;
             gap: 1px;
-            background-color: #ccc;
+            background-color: #CCCCCC; /* Cor de fundo da grade */
             cursor: crosshair;
             grid-template-columns: repeat(16, 30px);
             margin-right: 20px;
@@ -49,6 +50,7 @@
             background-color: white;
             width: 30px;
             height: 30px;
+            border: 1px solid #999; /* Borda das células */
         }
 
         /* Paleta de Cores */
@@ -73,6 +75,23 @@
             cursor: pointer;
             border: 1px solid #000;
             display: inline-block;
+            border-radius: 2px; /* Bordas arredondadas */
+        }
+
+        /* Botões */
+        button {
+            background-color: #4B4B4B; /* Cor do botão */
+            color: #FFFFFF; /* Cor do texto do botão */
+            border: none;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px; /* Bordas arredondadas */
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #5A5A5A; /* Cor do botão ao passar o mouse */
         }
 
         /* Animações */
@@ -130,9 +149,9 @@
                 <div id="frameList"></div>
             </div>
             <h3>Ferramentas</h3>
-            <button onclick="setTool('pencil')">Lápis</button>
-            <button onclick="setTool('eraser')">Borracha</button>
-            <button onclick="setTool('bucket')">Balde de Tinta</button>
+            <button onclick="setTool('pencil')" title="Lápis">✏️ Lápis</button>
+            <button onclick="setTool('eraser')" title="Borracha">🧼 Borracha</button>
+            <button onclick="setTool('bucket')" title="Balde de Tinta">🪣 Balde de Tinta</button>
             <button onclick="downloadImage()">Baixar Imagem</button> <!-- Botão para baixar a imagem -->
         </div>
         <div id="grid"></div>
@@ -226,40 +245,40 @@
             frame.className = 'frame';
             frame.onclick = () => selectFrame(frames.length);
             frames.push([]);
-            document.getElementById('frameList').appendChild(frame);
+            frameList.appendChild(frame);
             updateFrameList();
         }
 
         function selectFrame(index) {
             currentFrame = index;
-            loadFrame(currentFrame);
             updateFrameList();
-        }
-
-        function loadFrame(index) {
-            const pixels = document.querySelectorAll('.pixel');
-            const frameData = frames[index] || [];
-            pixels.forEach((pixel, i) => {
-                pixel.style.backgroundColor = frameData[i] || 'white';
-            });
-        }
-
-        function playAnimation() {
-            let frameIndex = 0;
-            const interval = setInterval(() => {
-                loadFrame(frameIndex);
-                frameIndex++;
-                if (frameIndex >= frames.length) frameIndex = 0;
-            }, 500);
+            loadFrame();
         }
 
         function updateFrameList() {
             const frameList = document.getElementById('frameList');
-            const framesDivs = frameList.querySelectorAll('.frame');
-            framesDivs.forEach((frameDiv, index) => {
-                frameDiv.classList.remove('selected');
-                if (index === currentFrame) frameDiv.classList.add('selected');
+            frameList.innerHTML = '';
+            frames.forEach((frame, index) => {
+                const frameElement = document.createElement('div');
+                frameElement.className = `frame ${index === currentFrame ? 'selected' : ''}`;
+                frameList.appendChild(frameElement);
             });
+        }
+
+        function loadFrame() {
+            const pixels = document.querySelectorAll('.pixel');
+            frames[currentFrame].forEach((color, index) => {
+                pixels[index].style.backgroundColor = color;
+            });
+        }
+
+        function playAnimation() {
+            if (frames.length === 0) return;
+            let index = 0;
+            setInterval(() => {
+                loadFrame();
+                index = (index + 1) % frames.length;
+            }, 500); // Altere o intervalo conforme necessário
         }
 
         function updatePaletteDisplay() {
@@ -270,7 +289,7 @@
                 colorBox.className = 'paletteColor';
                 colorBox.style.backgroundColor = color;
                 colorBox.onclick = () => {
-                    currentColor = color; // Define a cor atual para o clique na paleta
+                    currentColor = color; // Atualiza a cor atual
                     colorPicker.value = color; // Atualiza o seletor de cores
                 };
                 paletteDiv.appendChild(colorBox);
@@ -325,6 +344,10 @@
 
         function updateCurrentColor() {
             currentColor = colorPicker.value; // Atualiza a cor atual com a do seletor
+        }
+
+        function setTool(tool) {
+            currentTool = tool; // Atualiza a ferramenta atual
         }
 
         generateGrid(); // Gera a grade ao iniciar
