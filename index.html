@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Art Creator</title>
+    <title>Criador de Pixel Art</title>
     <style>
         body {
             display: flex;
@@ -12,10 +12,12 @@
             font-family: Arial, sans-serif;
             margin: 0;
             background-color: #e6e6e6;
+            overflow: hidden; /* Previne rolagem indesejada */
         }
         #controls {
             display: flex;
             flex-direction: column;
+            align-items: center;
             margin: 20px;
             padding: 10px;
             background-color: #fff;
@@ -26,122 +28,117 @@
             display: grid;
             margin: 10px 0;
             cursor: pointer;
+            touch-action: none; /* Previne rolagem ao tocar */
         }
         .pixel {
             width: 20px;
             height: 20px;
             border: 1px solid #ccc;
             box-sizing: border-box;
-        }
-        #sizeInput {
-            margin: 5px 0;
-        }
-        #colorPalette {
-            display: flex;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .color {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #000;
-            margin: 2px;
-            cursor: pointer;
-        }
-        #colorInfo {
-            margin-top: 10px;
-            font-weight: bold;
+            transition: background-color 0.3s;
         }
         #colorPicker {
-            margin-top: 10px;
-            width: 100px;
+            margin: 5px 0;
             height: 30px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        }
+        #toolSelector {
+            margin: 10px 0;
         }
         #downloadBtn {
             margin-top: 10px;
+        }
+        /* Ajustes responsivos */
+        @media (max-width: 600px) {
+            #grid {
+                grid-template-columns: repeat(8, 1fr); /* Menos colunas em telas pequenas */
+            }
+            .pixel {
+                width: 25px; /* Tamanho maior para toque fácil */
+                height: 25px;
+            }
         }
     </style>
 </head>
 <body>
 
     <div id="controls">
-        <label for="sizeInput">Tamanho do Pixel Art (até 512x512):</label>
-        <input type="number" id="sizeInput" min="1" max="512" value="16">
+        <label for="gridSize">Tamanho da Grade:</label>
+        <input type="number" id="gridSize" min="1" max="512" value="16">
         <button onclick="generateGrid()">Gerar Grade</button>
-        <div id="colorPalette"></div>
-        <input type="color" id="colorPicker" value="#000000" onchange="changeColor(this.value)">
-        <div id="colorInfo">Cor selecionada: <span id="selectedColor">#000000</span></div>
-        <label for="hsbInput">Escolha a cor HSB:</label>
-        <input type="color" id="hsbInput" value="#000000" onchange="changeColor(this.value)">
+        <label for="colorPicker">Cor do Pincel:</label>
+        <input type="color" id="colorPicker" value="#000000">
+        <label for="toolSelector">Ferramenta:</label>
+        <select id="toolSelector">
+            <option value="brush">Pincel</option>
+            <option value="eraser">Borracha</option>
+        </select>
         <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
     </div>
+    
     <div id="grid"></div>
 
     <script>
         const grid = document.getElementById('grid');
-        const colorPalette = document.getElementById('colorPalette');
-        const sizeInput = document.getElementById('sizeInput');
-        const selectedColorInfo = document.getElementById('selectedColor');
-        let brushColor = '#000000';
-
-        // Gera cores aleatórias
-        function generateRandomColors(num) {
-            const colorArray = [];
-            for (let i = 0; i < num; i++) {
-                const color = '#' + Math.floor(Math.random() * 16777215).toString(16);
-                colorArray.push(color);
-            }
-            return colorArray;
-        }
-
-        // Atualiza a paleta de cores
-        function updateColorPalette() {
-            const colors = generateRandomColors(8);
-            colorPalette.innerHTML = '';
-            colors.forEach(color => {
-                const colorDiv = document.createElement('div');
-                colorDiv.className = 'color';
-                colorDiv.style.backgroundColor = color;
-                colorDiv.onclick = () => changeColor(color);
-                colorPalette.appendChild(colorDiv);
-            });
-        }
-
-        // Altera a cor do pincel
-        function changeColor(color) {
-            brushColor = color;
-            selectedColorInfo.textContent = color;
-        }
+        const colorPicker = document.getElementById('colorPicker');
+        const toolSelector = document.getElementById('toolSelector');
+        let currentColor = '#000000';
+        let currentTool = 'brush';
 
         // Gera a grade de pixels
         function generateGrid() {
-            const size = parseInt(sizeInput.value);
-            if (size < 1 || size > 512) {
-                alert("O tamanho deve estar entre 1 e 512.");
-                return;
-            }
+            const size = parseInt(document.getElementById('gridSize').value);
             grid.innerHTML = ''; // Limpa a grade anterior
             grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
             grid.style.gridTemplateRows = `repeat(${size}, 1fr)`;
 
-            // Gera pixels e restaura cores salvas
+            // Gera pixels
             for (let i = 0; i < size * size; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
-                pixel.style.backgroundColor = localStorage.getItem(`pixel${i}`) || 'white'; // Restaura a cor se existir
-                pixel.onclick = () => {
-                    pixel.style.backgroundColor = brushColor;
-                    localStorage.setItem(`pixel${i}`, brushColor); // Salva a cor ao clicar
-                };
+                pixel.style.backgroundColor = 'white';
+                pixel.addEventListener('mousedown', () => paintPixel(pixel));
+                pixel.addEventListener('touchstart', () => paintPixel(pixel), { passive: true }); // Para dispositivos móveis
+                pixel.addEventListener('mouseover', () => {
+                    if (mouseDown) paintPixel(pixel);
+                });
+                pixel.addEventListener('touchmove', (e) => {
+                    e.preventDefault(); // Previne rolagem na tela
+                    if (mouseDown) paintPixel(pixel);
+                });
                 grid.appendChild(pixel);
             }
         }
 
+        // Variável para detectar se o mouse está pressionado
+        let mouseDown = false;
+
+        // Eventos de mouse
+        window.addEventListener('mousedown', () => { mouseDown = true; });
+        window.addEventListener('mouseup', () => { mouseDown = false; });
+        window.addEventListener('touchend', () => { mouseDown = false; }); // Para dispositivos móveis
+
+        // Pintar o pixel
+        function paintPixel(pixel) {
+            if (currentTool === 'brush') {
+                pixel.style.backgroundColor = currentColor;
+            } else if (currentTool === 'eraser') {
+                pixel.style.backgroundColor = 'white';
+            }
+        }
+
+        // Atualiza a cor selecionada
+        colorPicker.addEventListener('input', (e) => {
+            currentColor = e.target.value;
+        });
+
+        // Atualiza a ferramenta selecionada
+        toolSelector.addEventListener('change', (e) => {
+            currentTool = e.target.value;
+        });
+
         // Baixa a imagem da arte em pixel
         function downloadImage() {
-            const size = parseInt(sizeInput.value);
+            const size = parseInt(document.getElementById('gridSize').value);
             const canvas = document.createElement('canvas');
             canvas.width = size * 20; // 20px por pixel
             canvas.height = size * 20; // 20px por pixel
@@ -163,9 +160,8 @@
             link.click();
         }
 
-        // Inicializa a paleta de cores
-        updateColorPalette();
-        generateGrid(); // Gera a grade na inicialização
+        // Gera a grade na inicialização
+        generateGrid();
     </script>
 </body>
 </html>
