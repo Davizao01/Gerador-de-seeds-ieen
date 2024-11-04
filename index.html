@@ -3,238 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criador de Pixel Art</title>
+    <title>Pixel Art Maker</title>
     <style>
         body {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-family: Arial, sans-serif;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
             margin: 0;
-            background-color: #e6e6e6;
-            overflow: hidden;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
         }
-        #controls {
+        #container {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px;
-            padding: 10px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            justify-content: center;
+            align-items: flex-start;
         }
         #grid {
             display: grid;
-            margin: 10px 0;
-            cursor: pointer;
-            touch-action: none; 
+            gap: 1px;
+            margin: 20px;
+            background-color: #ccc;
         }
         .pixel {
             width: 20px;
             height: 20px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            transition: background-color 0.3s;
+            background-color: white;
+            border: 1px solid #ddd;
+            cursor: pointer;
         }
-        #colorPicker {
-            margin: 5px 0;
-            height: 30px;
-        }
-        #toolSelector {
-            margin: 10px 0;
-        }
-        #downloadBtn, #savePaletteBtn, #loadPaletteBtn {
-            margin-top: 10px;
-        }
-        #palette {
+        .toolbox {
             display: flex;
-            flex-wrap: wrap;
-            margin: 10px 0;
+            flex-direction: column;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         .paletteColor {
             width: 30px;
             height: 30px;
-            border: 1px solid #ccc;
             margin: 2px;
             cursor: pointer;
+            border: 1px solid #000;
         }
-        /* Ajustes responsivos */
-        @media (max-width: 600px) {
-            #grid {
-                grid-template-columns: repeat(8, 1fr);
-            }
-            .pixel {
-                width: 25px; 
-                height: 25px;
-            }
+        h2 {
+            margin: 0 0 10px 0;
         }
     </style>
 </head>
 <body>
-
-    <div id="controls">
-        <label for="gridSize">Tamanho da Grade:</label>
-        <input type="number" id="gridSize" min="1" max="512" value="16">
-        <button onclick="generateGrid()">Gerar Grade</button>
-        <label for="colorPicker">Cor do Pincel:</label>
-        <input type="color" id="colorPicker" value="#000000">
-        <label for="toolSelector">Ferramenta:</label>
-        <select id="toolSelector">
-            <option value="brush">Pincel</option>
-            <option value="eraser">Borracha</option>
-            <option value="bucket">Balde de Tinta</option>
-            <option value="outline">Contorno</option>
-            <option value="selection">Seleção</option>
-        </select>
-        <button id="downloadBtn" onclick="downloadImage()">Baixar Imagem</button>
-        <button id="savePaletteBtn" onclick="savePalette()">Salvar Paleta</button>
-        <button id="loadPaletteBtn" onclick="loadPalette()">Carregar Paleta</button>
-        <input type="file" id="paletteImageInput" accept="image/*" onchange="loadPaletteFromImage(event)" style="display:none;">
-        <button onclick="document.getElementById('paletteImageInput').click()">Carregar Paleta por Imagem</button>
-        <div id="palette"></div>
-        <button onclick="createNewFrame()">Novo Quadro</button>
-        <button onclick="playAnimation()">Reproduzir Animação</button>
-        <button id="undoBtn" onclick="undoAction()">Desfazer (Ctrl + Z)</button>
+    <div id="container">
+        <div class="toolbox">
+            <h2>Ferramentas</h2>
+            <input type="color" id="colorPicker" value="#000000">
+            <button onclick="savePalette()">Salvar Cor</button>
+            <button onclick="loadPalette()">Carregar Paleta</button>
+            <input type="file" accept="image/*" onchange="loadPaletteFromImage(event)">
+            <button onclick="createNewFrame()">Novo Quadro</button>
+            <button onclick="playAnimation()">Reproduzir Animação</button>
+            <button onclick="undoAction()">Desfazer</button>
+            <div id="palette"></div>
+        </div>
+        <div id="grid"></div>
     </div>
-    
-    <div id="grid"></div>
 
     <script>
+        const gridSize = 16; // Tamanho da grade
         const grid = document.getElementById('grid');
         const colorPicker = document.getElementById('colorPicker');
-        const toolSelector = document.getElementById('toolSelector');
-        const actionHistory = []; // Para histórico de ações
-        let currentColor = '#000000';
-        let currentTool = 'brush';
-        let currentFrame = 0; // Para animações
-        let frames = []; // Armazena os quadros da animação
+        let currentColor = colorPicker.value;
+        const frames = [];
+        let currentFrame = 0;
+        const actionHistory = [];
 
-        // Gera a grade de pixels
         function generateGrid() {
-            const size = parseInt(document.getElementById('gridSize').value);
-            grid.innerHTML = ''; // Limpa a grade anterior
-            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
-            grid.style.gridTemplateRows = `repeat(${size}, 1fr)`;
-
-            // Gera pixels
-            for (let i = 0; i < size * size; i++) {
+            grid.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+            for (let i = 0; i < gridSize * gridSize; i++) {
                 const pixel = document.createElement('div');
                 pixel.className = 'pixel';
-                pixel.style.backgroundColor = 'white';
-                pixel.addEventListener('mousedown', () => paintPixel(pixel));
-                pixel.addEventListener('touchstart', () => paintPixel(pixel), { passive: true });
-                pixel.addEventListener('mouseover', () => {
-                    if (mouseDown) paintPixel(pixel);
-                });
-                pixel.addEventListener('touchmove', (e) => {
-                    e.preventDefault(); 
-                    if (mouseDown) paintPixel(pixel);
-                });
+                pixel.addEventListener('click', () => paintPixel(pixel));
                 grid.appendChild(pixel);
             }
         }
 
-        let mouseDown = false;
-
-        // Eventos de mouse
-        window.addEventListener('mousedown', () => { mouseDown = true; });
-        window.addEventListener('mouseup', () => { mouseDown = false; });
-        window.addEventListener('touchend', () => { mouseDown = false; });
-
-        // Pintar o pixel
         function paintPixel(pixel) {
-            if (currentTool === 'brush') {
-                pixel.style.backgroundColor = currentColor;
-                actionHistory.push({ action: 'paint', pixel: pixel, color: pixel.style.backgroundColor });
-            } else if (currentTool === 'eraser') {
-                pixel.style.backgroundColor = 'white';
-                actionHistory.push({ action: 'erase', pixel: pixel });
-            } else if (currentTool === 'bucket') {
-                fillArea(pixel);
-            } else if (currentTool === 'outline') {
-                addOutline(pixel);
-            } else if (currentTool === 'selection') {
-                selectArea(pixel);
-            }
-        }
-
-        // Preencher área com a cor selecionada
-        function fillArea(pixel) {
-            const targetColor = pixel.style.backgroundColor;
-            const newColor = currentColor;
-
-            if (targetColor === newColor) return;
-
-            const pixels = document.querySelectorAll('.pixel');
-            const size = Math.sqrt(pixels.length);
-            const queue = [pixel];
-
-            while (queue.length > 0) {
-                const current = queue.pop();
-                if (current.style.backgroundColor === targetColor) {
-                    current.style.backgroundColor = newColor;
-                    actionHistory.push({ action: 'paint', pixel: current, color: newColor });
-                    const index = Array.from(pixels).indexOf(current);
-                    const neighbors = [
-                        pixels[index - 1],
-                        pixels[index + 1],
-                        pixels[index - size],
-                        pixels[index + size]
-                    ];
-                    neighbors.forEach(neighbor => {
-                        if (neighbor && neighbor.style.backgroundColor === targetColor) {
-                            queue.push(neighbor);
-                        }
-                    });
-                }
-            }
-        }
-
-        // Adiciona contorno
-        function addOutline(pixel) {
-            pixel.style.border = `2px solid ${currentColor}`;
-            actionHistory.push({ action: 'outline', pixel: pixel, color: currentColor });
-        }
-
-        // Seleciona uma área
-        function selectArea(pixel) {
-            // Lógica de seleção de área pode ser implementada aqui
-            pixel.style.outline = `2px solid ${currentColor}`;
-        }
-
-        colorPicker.addEventListener('input', (e) => {
-            currentColor = e.target.value;
-        });
-
-        toolSelector.addEventListener('change', (e) => {
-            currentTool = e.target.value;
-        });
-
-        function downloadImage() {
-            const size = parseInt(document.getElementById('gridSize').value);
-            const canvas = document.createElement('canvas');
-            canvas.width = size * 20;
-            canvas.height = size * 20;
-            const ctx = canvas.getContext('2d');
-
-            const pixels = document.querySelectorAll('.pixel');
-            pixels.forEach((pixel, index) => {
-                const x = (index % size) * 20;
-                const y = Math.floor(index / size) * 20;
-                ctx.fillStyle = pixel.style.backgroundColor === 'white' ? 'rgba(255, 255, 255, 0)' : pixel.style.backgroundColor;
-                ctx.fillRect(x, y, 20, 20);
-            });
-
-            canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'pixel_art.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            });
+            const lastColor = pixel.style.backgroundColor;
+            pixel.style.backgroundColor = currentColor;
+            actionHistory.push({ action: 'paint', pixel: pixel, color: lastColor });
         }
 
         function savePalette() {
@@ -331,10 +186,6 @@
             const lastAction = actionHistory.pop();
             if (lastAction.action === 'paint') {
                 lastAction.pixel.style.backgroundColor = lastAction.color;
-            } else if (lastAction.action === 'erase') {
-                lastAction.pixel.style.backgroundColor = 'white';
-            } else if (lastAction.action === 'outline') {
-                lastAction.pixel.style.border = 'none';
             }
             // Adicione mais lógica se necessário
         }
