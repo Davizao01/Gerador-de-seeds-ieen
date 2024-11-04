@@ -48,6 +48,7 @@
             background-color: white;
             width: 30px;
             height: 30px;
+            transition: background-color 0.2s; /* Adicionando transição */
         }
 
         /* Botão de download */
@@ -121,6 +122,7 @@
                 <h2>Animação</h2>
                 <button onclick="addFrame()">Adicionar Quadro</button>
                 <button onclick="playAnimation()">Reproduzir</button>
+                <button onclick="stopAnimation()">Parar</button>
                 <div id="frameList"></div>
             </div>
         </div>
@@ -135,6 +137,7 @@
         let history = [];
         let frames = [];
         let currentFrame = 0;
+        let interval; // Para controlar a animação
 
         // Cria a grade de pixels
         function generateGrid() {
@@ -171,10 +174,10 @@
         }
 
         function addFrame() {
+            frames.push(Array.from(document.querySelectorAll('.pixel')).map(pixel => pixel.style.backgroundColor));
             const frame = document.createElement('div');
             frame.className = 'frame';
-            frame.onclick = () => selectFrame(frames.length);
-            frames.push([]);
+            frame.onclick = () => selectFrame(frames.length - 1);
             document.getElementById('frameList').appendChild(frame);
             updateFrameList();
         }
@@ -195,11 +198,15 @@
 
         function playAnimation() {
             let frameIndex = 0;
-            const interval = setInterval(() => {
+            interval = setInterval(() => {
                 loadFrame(frameIndex);
                 frameIndex++;
                 if (frameIndex >= frames.length) frameIndex = 0;
             }, 500);
+        }
+
+        function stopAnimation() {
+            clearInterval(interval);
         }
 
         function updateFrameList() {
